@@ -23,8 +23,6 @@ go get github.com/starriver/charli
 Declare an `App` with `Command`s:
 
 ```go
-import cli "github.com/starriver/charli"
-
 var app = cli.App{
 	Commands: []cli.Command{
 		{
@@ -59,6 +57,13 @@ Parse your args, then handle the result however you'd like:
 
 ```go
 package main
+
+import (
+	"fmt"
+	"os"
+
+	cli "github.com/starriver/charli"
+)
 
 func main() {
 	r := app.Parse(os.Args)
