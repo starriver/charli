@@ -1,0 +1,480 @@
+package charli
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/go-test/deep"
+)
+
+var testParseTemplate = App{
+	Commands: []Command{
+		{
+			Name: "zero",
+		},
+		{
+			Name: "options",
+			Options: []Option{
+				{
+					Long: "long",
+				},
+				{
+					Short:   'c',
+					Long:    "choice",
+					Choices: []string{"a", "b", "c"},
+				},
+				{
+					Short: 'f',
+					Long:  "flag",
+					Flag:  true,
+				},
+			},
+		},
+		{
+			Name: "combined",
+			Options: []Option{
+				{
+					Short: 'a',
+					Flag:  true,
+				},
+				{
+					Short: 'b',
+					Flag:  true,
+				},
+				{
+					Short: 'c',
+					Flag:  true,
+				},
+			},
+		},
+		{
+			Name: "args3",
+			Options: []Option{
+				{
+					Long: "opt",
+					Flag: true,
+				},
+			},
+			Args: Args{
+				Count:    3,
+				Metavars: []string{"A", "B", "C"},
+			},
+		},
+		{
+			Name: "args3v",
+			Args: Args{
+				Count:    3,
+				Varadic:  true,
+				Metavars: []string{"A", "B", "C", "D"},
+			},
+		},
+		{
+			Name: "args0v",
+			Args: Args{
+				Count:    0,
+				Varadic:  true,
+				Metavars: []string{"A"},
+			},
+		},
+	},
+}
+
+var testParseCases = []struct {
+	input      []string
+	setDefault string
+	output     Result
+	cmdName    string
+	errCount   int
+}{
+	{
+		input: []string{},
+		output: Result{
+			Action: HelpError,
+		},
+	},
+	{
+		input: []string{"-h"},
+		output: Result{
+			Action: HelpOK,
+		},
+	},
+	{
+		// Invalid command
+		input: []string{"nope"},
+		output: Result{
+			Action: Fatal,
+		},
+		errCount: 1,
+	},
+	{
+		// Invalid command
+		input: []string{"nope", "-h"},
+		output: Result{
+			Action: HelpError,
+		},
+		errCount: 1,
+	},
+	{
+		// Extraneous arg when asking for help
+		input: []string{"-h", "-a"},
+		output: Result{
+			Action: HelpError,
+		},
+	},
+	{
+		input: []string{"zero"},
+		output: Result{
+			Action: Proceed,
+		},
+		cmdName: "zero",
+	},
+	{
+		input: []string{"-h", "zero"},
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "zero",
+	},
+	{
+		input: []string{"zero", "-h"},
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "zero",
+	},
+	{
+		input: []string{"zero", "--help"},
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "zero",
+	},
+	{
+		// Extraneous arg when asking for help
+		input: []string{"-h", "zero", "-b"},
+		output: Result{
+			Action: HelpError,
+		},
+		cmdName: "zero",
+	},
+	{
+		// Extraneous arg when asking for help
+		input: []string{"zero", "-h", "-b"},
+		output: Result{
+			Action: HelpError,
+		},
+		cmdName: "zero",
+	},
+	{
+		// Extraneous arg when asking for help
+		input: []string{"zero", "-b", "-h"},
+		output: Result{
+			Action: HelpError,
+		},
+		cmdName: "zero",
+	},
+	{
+		input:      []string{},
+		setDefault: "zero",
+		output: Result{
+			Action: Proceed,
+		},
+		cmdName: "zero",
+	},
+	{
+		input:      []string{"-h"},
+		setDefault: "zero",
+		output: Result{
+			Action: HelpOK,
+		},
+	},
+	{
+		input: []string{"options"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {},
+				"flag":   {},
+			},
+		},
+		cmdName: "options",
+	},
+	{
+		input: []string{"options", "--long", "ok", "--choice=a", "-f"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {Value: "ok", IsSet: true},
+				"c":      {Value: "a", IsSet: true},
+				"choice": {Value: "a", IsSet: true},
+				"f":      {IsSet: true},
+				"flag":   {IsSet: true},
+			},
+		},
+		cmdName: "options",
+	},
+	{
+		input: []string{"options", "-c", "a"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {},
+				"c":      {Value: "a", IsSet: true},
+				"choice": {Value: "a", IsSet: true},
+				"f":      {},
+				"flag":   {},
+			},
+		},
+		cmdName: "options",
+	},
+	{
+		// Nothing supplied for --long
+		input: []string{"options", "--long", "--choice=a", "-f"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {IsSet: true},
+				"flag":   {IsSet: true},
+			},
+		},
+		errCount: 1,
+		cmdName:  "options",
+	},
+	{
+		// Nothing supplied for --long (at end)
+		input: []string{"options", "--long"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {},
+				"flag":   {},
+			},
+		},
+		errCount: 1,
+		cmdName:  "options",
+	},
+	{
+		// -c=a is invalid, d is invalid choice, - isn't an option
+		input: []string{"options", "-c=a", "--choice", "d", "-"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {},
+				"flag":   {},
+			},
+		},
+		errCount: 3,
+		cmdName:  "options",
+	},
+	{
+		input: []string{"combined", "-ab"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"a": {IsSet: true},
+				"b": {IsSet: true},
+				"c": {},
+			},
+		},
+		cmdName: "combined",
+	},
+	{
+		input: []string{"combined", "-ab", "-c"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"a": {IsSet: true},
+				"b": {IsSet: true},
+				"c": {IsSet: true},
+			},
+		},
+		cmdName: "combined",
+	},
+	{
+		// -x isn't an option
+		input: []string{"combined", "-abx"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"a": {IsSet: true},
+				"b": {IsSet: true},
+				"c": {},
+			},
+		},
+		errCount: 1,
+		cmdName:  "combined",
+	},
+	{
+		input: []string{"args3", "a", "b", "c"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {},
+			},
+			Args: []string{"a", "b", "c"},
+		},
+		cmdName: "args3",
+	},
+	{
+		// Too many args
+		input: []string{"args3", "a", "b", "c", "d"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {},
+			},
+			Args: []string{"a", "b", "c"},
+		},
+		errCount: 1,
+		cmdName:  "args3",
+	},
+	{
+		// Too few args
+		input: []string{"args3", "a"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {},
+			},
+			Args: []string{"a"},
+		},
+		errCount: 1,
+		cmdName:  "args3",
+	},
+	{
+		input: []string{"args3", "a", "--opt", "b", "c"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {IsSet: true},
+			},
+			Args: []string{"a", "b", "c"},
+		},
+		cmdName: "args3",
+	},
+	{
+		input: []string{"args3", "a", "b", "--", "--opt"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {},
+			},
+			Args: []string{"a", "b", "--opt"},
+		},
+		cmdName: "args3",
+	},
+	{
+		input: []string{"args3", "a", "b"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"opt": {},
+			},
+			Args: []string{"a", "b"},
+		},
+		errCount: 1,
+		cmdName:  "args3",
+	},
+	{
+		input: []string{"args3v", "a", "b", "c", "d"},
+		output: Result{
+			Action: Proceed,
+			Args:   []string{"a", "b", "c", "d"},
+		},
+		cmdName: "args3v",
+	},
+	{
+		input: []string{"args3v", "a", "b"},
+		output: Result{
+			Action: Proceed,
+			Args:   []string{"a", "b"},
+		},
+		errCount: 1,
+		cmdName:  "args3v",
+	},
+	{
+		input: []string{"args0v"},
+		output: Result{
+			Action: Proceed,
+		},
+		cmdName: "args0v",
+	},
+	{
+		input: []string{"args0v", "a", "b"},
+		output: Result{
+			Action: Proceed,
+			Args:   []string{"a", "b"},
+		},
+		cmdName: "args0v",
+	},
+}
+
+func TestParse(t *testing.T) {
+	deep.CompareUnexportedFields = true
+
+	for i, test := range testParseCases {
+		t.Run(fmt.Sprintf("Test %d, %v", i, test.input), func(t *testing.T) {
+			app := testParseTemplate
+			input := append([]string{"program"}, test.input...)
+			if test.setDefault != "" {
+				app.DefaultCommand = test.setDefault
+			}
+
+			got := app.Parse(input)
+			want := test.output
+
+			// Patch in some fields.
+			want.App = &app
+			if test.cmdName != "" {
+				for _, cmd := range app.Commands {
+					if cmd.Name == test.cmdName {
+						want.Command = &cmd
+						break
+					}
+				}
+			}
+
+			// We don't care about testing whether these maps are initialised.
+			if got.Options == nil {
+				got.Options = make(map[string]*OptionResult)
+			}
+			if want.Options == nil {
+				want.Options = make(map[string]*OptionResult)
+			}
+
+			// We test whether options are correctly mapped implicitly, so blank
+			// out the pointers.
+			for _, o := range got.Options {
+				o.Option = nil
+			}
+
+			// TODO: a more proper error test. Counting them will do for now.
+			if len(got.Errs) != test.errCount {
+				t.Errorf(
+					"error count: got %v, want %v\nerrors: %v",
+					len(got.Errs),
+					test.errCount,
+					got.Errs,
+				)
+			}
+			got.Errs = nil
+
+			if diff := deep.Equal(got, want); diff != nil {
+				t.Error(diff)
+			}
+		})
+	}
+
+}
