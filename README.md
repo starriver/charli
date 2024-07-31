@@ -14,44 +14,85 @@ A small, pure(-ish) CLI parser and help formatting library.
 
 ## Quickstart
 
+### Install
+
 To install:
 
 ```sh
 go get github.com/starriver/charli
 ```
 
-Declare an `App` with `Command`s:
+To import:
+
+```go
+import cli "github.com/starriver/charli"
+```
+
+### Configuration
+
+Declare an `App` with `Command`s to configure your CLI.
 
 ```go
 var app = cli.App{
 	Commands: []cli.Command{
-		{
-			Name: "get",
-			Headline: "Download some stuff",
-			Options: []cli.Option{
-				Short: 'o'
-				Long: "output",
-				Metavar: "PATH",
-				Headline: "Download to {PATH}",
-			},
-			Run: func(r *cli.Result) (ok bool) {
-				return len(r.Errs) == 0 // TODO
-			},
-		},
-		{
-			Name: "put",
-			Headline: "Upload some stuff",
-			Args: cli.Args{
-				Count: 1,
-				Metavars: []string{"FILE"},
-			},
-			Run: func(r *cli.Result) (ok bool) {
-				return len(r.Errs) == 0 // TODO
-			},
-		},
+		get,
+		put,
+	},
+}
+
+var get = cli.Command{
+	Name: "get",
+	Headline: "Download some stuff",
+	Options: []cli.Option{
+		Short: 'o'
+		Long: "output",
+		Metavar: "PATH",
+		Headline: "Download to {PATH}",
+	},
+	Run: func(r *cli.Result) (ok bool) {
+		return len(r.Errs) == 0 // TODO
+	},
+}
+
+var put = cli.Command{
+	Name: "put",
+	Headline: "Upload some stuff",
+	Args: cli.Args{
+		Count: 1,
+		Metavars: []string{"FILE"},
+	},
+	Run: func(r *cli.Result) (ok bool) {
+		return len(r.Errs) == 0 // TODO
 	},
 }
 ```
+
+### Implement `Run` functions
+
+`Command.Run(...)` functions are where you do your own validations, and – if they pass – proceed to actually do that command's work.
+
+Here's an example for the `get` command above, which wants to download a file to the path specified by the `--output` flag.
+
+```go
+Run: func(r* cli.Result) (ok bool) {
+	v := r.Options["output"].Value
+	if v == "" {
+		r.Error("blank path supplied")
+	} else if _, err := os.Stat(v); err == nil {
+		r.Error("file already exists")
+	}
+
+	if len(r.Errs) != 0 {
+		return false
+	}
+
+	// TODO: actually download some stuff.
+
+	return true
+}
+```
+
+### Parsing
 
 Parse your args, then handle the result however you'd like:
 
@@ -90,7 +131,7 @@ func main() {
 }
 ```
 
-[See the examples](./examples) for more.
+[See the examples](./examples) and [the docs](https://pkg.go.dev/github.com/starriver/charli) for more.
 
 ## Design
 
