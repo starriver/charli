@@ -91,9 +91,9 @@ func main() {
 
 charli provides a very lightweight, 'toolkit' approach to CLI development.
 
-If you've used [urfave/cli](https://charli.urfave.org/), you might notice the config structs (`App`, `Command` etc.) are similar, but that's about it for similarities between the two. charli is functionally pure first and foremost: its main workhorse functions, `App.Parse(...)` and `App.Help(...)`, have no side-effects.
+If you've used [urfave/cli](https://charli.urfave.org/), you might notice the config structs (`App`, `Command` etc.) are similar, but that's about it. charli is functionally pure first and foremost: its workhorse functions, `App.Parse(...)` and `App.Help(...)`, have no side-effects.
 
-Some I/O helper functions are provided (eg. `Result.PrintHelp()`), but aside from parsing and help generation, the way your app responds to a parse `Result`, or a help string, is entirely up to you.
+Some I/O helpers are provided (eg. `Result.PrintHelp()`), but aside from parsing and help generation, the way your app responds to a parse `Result` – or a help string – is entirely up to you.
 
 **Why did we make this?** Well, we're very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
 
@@ -109,8 +109,8 @@ Some I/O helper functions are provided (eg. `Result.PrintHelp()`), but aside fro
 	- Allow downstream validations to continue even with parse errors.
 	- However: make downstream validations aware of previous errors, so that expensive operations can be short-circuited.
 - **Render our preferred help format.**
-	- We like what we like, we hate what we hate (but we're oh so easily swayed).
-	- Also, make colors optional (`fatih/color` allows turning them off).
+	- We like what we like, we hate what we hate (but we're [oh so easily swayed](https://www.youtube.com/watch?v=7Z5kEqRFPwo)).
+	- Also, make colors optional ([fatih/color](https://github.com/fatih/color) allows turning them off).
 
 ## License
 
