@@ -31,7 +31,7 @@ var varadic = cli.Command{
 		Varadic:  true,
 	},
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		cmd := r.Command
 
 		if len(r.Errs) != 0 {

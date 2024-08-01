@@ -29,7 +29,7 @@ var fixed = cli.Command{
 		Metavars: []string{"ONE", "TWO", "THREE"},
 	},
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		cmd := r.Command
 
 		if len(r.Errs) != 0 {

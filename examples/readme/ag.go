@@ -24,7 +24,7 @@ var ag = cli.Command{
 		Headline: "Have A.G. produce your track",
 	}),
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		// Cmon. We're not writing logic for this nonsense.
 		return len(r.Errs) == 0
 	},

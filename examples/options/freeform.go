@@ -25,7 +25,7 @@ var freeform = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		if r.Options["name"].Value == "" {
 			r.Error("I need a name...")
 		}

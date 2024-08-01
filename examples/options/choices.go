@@ -25,7 +25,7 @@ var choices = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		// Compare this with the r.Options["name"] check in freeform.go. If the
 		// name is set here, it must be one of the above choices.
 		if !r.Options["name"].IsSet {

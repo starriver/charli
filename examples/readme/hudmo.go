@@ -16,7 +16,7 @@ var hudmo = cli.Command{
 	Description: hudmoDescription,
 	Options:     options,
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		// Cmon. We're not writing logic for this nonsense.
 		return len(r.Errs) == 0
 	},

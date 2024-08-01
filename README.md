@@ -49,7 +49,7 @@ var get = cli.Command{
 		Metavar: "PATH",
 		Headline: "Download to {PATH}",
 	},
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		return len(r.Errs) == 0 // TODO
 	},
 }
@@ -61,7 +61,7 @@ var put = cli.Command{
 		Count: 1,
 		Metavars: []string{"FILE"},
 	},
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		return len(r.Errs) == 0 // TODO
 	},
 }
@@ -74,7 +74,7 @@ var put = cli.Command{
 Here's an example for the `get` command above, which wants to download a file to the path specified by the `--output` flag.
 
 ```go
-Run: func(r* cli.Result) (ok bool) {
+Run: func(r* cli.Result) bool {
 	v := r.Options["output"].Value
 	if v == "" {
 		r.Error("blank path supplied")

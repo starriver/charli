@@ -23,7 +23,7 @@ var flags = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) (ok bool) {
+	Run: func(r *cli.Result) bool {
 		if len(r.Errs) != 0 {
 			return false
 		}
