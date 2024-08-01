@@ -26,7 +26,7 @@ func (app *App) Help(program string, cmd *Command) string {
 
 	hi := color.New(hiColor).SprintfFunc()
 	bold := color.New(color.Bold).SprintfFunc()
-	grey := color.New(color.FgWhite).SprintFunc()
+	grey := color.New(color.Faint).SprintFunc()
 
 	// Applys color to {FOO} and {-f/--foo} in descriptions.
 	re := regexp.MustCompile(`\{.+?\}`)
