@@ -73,7 +73,7 @@ type Command struct {
 	//
 	// The caller should inspect r.Errs after this function returns, and exit
 	// the program nonzero if it returned false.
-	Run func(r *Result) (ok bool)
+	Run func(r *Result) bool
 }
 
 // Configuration for a single option, providing a value or a flag.
