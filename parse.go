@@ -29,6 +29,11 @@ func (app *App) Parse(argv []string) (r Result) {
 		return nil
 	}
 
+	singleCmd := len(app.Commands) == 1
+	if singleCmd {
+		r.Command = &app.Commands[0]
+	}
+
 	// Start by scanning for special args: -- and -h/--help. This is done
 	// beforehand because (a) we don't want to show any other errors when
 	// requesting help, (b) we need to check for -- with respect to the help
@@ -50,7 +55,7 @@ func (app *App) Parse(argv []string) (r Result) {
 		// 'program command -h [...]' - ie. the 1st or 2nd flag mustn't look
 		// like an option.
 		invalidCmd := true
-		if nargs > 1 {
+		if !singleCmd && nargs > 1 {
 			for i := range 2 {
 				if isOption(args[i]) {
 					continue
@@ -85,35 +90,41 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	var cmdArgs []string
 
-	// If a default is available, and the first arg doesn't look like a command,
-	// use the default.
-	possibleCommand := nargs > 0 && !isOption(args[0])
-	if app.DefaultCommand != "" && !possibleCommand {
-		r.Command = findCommand(app.DefaultCommand)
+	if singleCmd {
+		// r.Command already set.
 		cmdArgs = args
 	} else {
-		if nargs == 0 { // Implicit: app.DefaultCommand can't be set here.
-			// Display help if no command or default.
-			r.Action = HelpError
-			return
-		}
-		if !possibleCommand {
-			// The user might've supplied flags - but no command.
-			r.Errorf("no command supplied - try `%s --help`", program)
-			r.Action = Fatal
-			return
-		}
+		// If we don't just have a single command, we now need to select one. If
+		// a default is available, and the first arg doesn't look like a
+		// command, use the default.
+		possibleCommand := nargs > 0 && !isOption(args[0])
+		if app.DefaultCommand != "" && !possibleCommand {
+			r.Command = findCommand(app.DefaultCommand)
+			cmdArgs = args
+		} else {
+			if nargs == 0 { // Implicit: app.DefaultCommand can't be set here.
+				// Display help if no command or default.
+				r.Action = HelpError
+				return
+			}
+			if !possibleCommand {
+				// The user might've supplied flags - but no command.
+				r.Errorf("no command supplied - try `%s --help`", program)
+				r.Action = Fatal
+				return
+			}
 
-		r.Command = findCommand(args[0])
-		if r.Command == nil {
-			r.Errorf(
-				"'%s' isn't a command - try `%s --help`",
-				args[0], program,
-			)
-			r.Action = Fatal
-			return
+			r.Command = findCommand(args[0])
+			if r.Command == nil {
+				r.Errorf(
+					"'%s' isn't a command - try `%s --help`",
+					args[0], program,
+				)
+				r.Action = Fatal
+				return
+			}
+			cmdArgs = args[1:]
 		}
-		cmdArgs = args[1:]
 	}
 
 	// If we've reached this far, we have a valid Command and can begin
@@ -294,6 +305,12 @@ func (app *App) Parse(argv []string) (r Result) {
 		metavars := strings.Join(rca.Metavars[n:], " ")
 
 		r.Errorf("missing argument%s: %s", plural, metavars)
+	}
+
+	// Depending on how things turned out above, Args can sometimes be a nil
+	// slice. Give it an array for consistency.
+	if r.Args == nil {
+		r.Args = []string{}
 	}
 
 	r.Action = Proceed

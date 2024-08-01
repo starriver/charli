@@ -79,9 +79,24 @@ var testParseTemplate = App{
 	},
 }
 
+var testParseTemplateSingle = App{
+	Commands: []Command{
+		{
+			Options: []Option{
+				{
+					Short: 'f',
+					Long:  "flag",
+					Flag:  true,
+				},
+			},
+		},
+	},
+}
+
 var testParseCases = []struct {
 	input      []string
 	setDefault string
+	useSingle  bool
 	output     Result
 	cmdName    string
 	errCount   int
@@ -419,6 +434,59 @@ var testParseCases = []struct {
 		},
 		cmdName: "args0v",
 	},
+	{
+		input:     []string{},
+		useSingle: true,
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"f":    {},
+				"flag": {},
+			},
+		},
+		cmdName: "only",
+	},
+	{
+		input:     []string{"-f"},
+		useSingle: true,
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"f":    {IsSet: true},
+				"flag": {IsSet: true},
+			},
+		},
+		cmdName: "only",
+	},
+	{
+		input:     []string{"-h"},
+		useSingle: true,
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "only",
+	},
+	{
+		input:     []string{"only"},
+		useSingle: true,
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"f":    {},
+				"flag": {},
+			},
+		},
+		cmdName:  "only",
+		errCount: 1,
+	},
+	{
+		input:     []string{"-h", "only"},
+		useSingle: true,
+		output: Result{
+			Action: HelpError,
+		},
+		cmdName: "only",
+	},
 }
 
 func TestParse(t *testing.T) {
@@ -427,6 +495,9 @@ func TestParse(t *testing.T) {
 	for i, test := range testParseCases {
 		t.Run(fmt.Sprintf("Test %d, %v", i, test.input), func(t *testing.T) {
 			app := testParseTemplate
+			if test.useSingle {
+				app = testParseTemplateSingle
+			}
 			input := append([]string{"program"}, test.input...)
 			if test.setDefault != "" {
 				app.DefaultCommand = test.setDefault
@@ -438,10 +509,14 @@ func TestParse(t *testing.T) {
 			// Patch in some fields.
 			want.App = &app
 			if test.cmdName != "" {
-				for _, cmd := range app.Commands {
-					if cmd.Name == test.cmdName {
-						want.Command = &cmd
-						break
+				if test.useSingle {
+					want.Command = &app.Commands[0]
+				} else {
+					for _, cmd := range app.Commands {
+						if cmd.Name == test.cmdName {
+							want.Command = &cmd
+							break
+						}
 					}
 				}
 			}
@@ -452,6 +527,11 @@ func TestParse(t *testing.T) {
 			}
 			if want.Options == nil {
 				want.Options = make(map[string]*OptionResult)
+			}
+
+			// Expect an empty (not nil) slice where Action == Proceed.
+			if (want.Action == Proceed) && want.Args == nil {
+				want.Args = []string{}
 			}
 
 			// We test whether options are correctly mapped implicitly, so blank
