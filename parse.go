@@ -132,8 +132,9 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	// Start by building r.Options. Note the long and short names resolve to the
 	// same struct.
-	r.Options = make(map[string]*OptionResult, len(r.Command.Options)*2)
-	for _, option := range r.Command.Options {
+	mapSizeHint := len(app.GlobalOptions)*2 + len(r.Command.Options)*2
+	r.Options = make(map[string]*OptionResult, mapSizeHint)
+	for _, option := range append(app.GlobalOptions, r.Command.Options...) {
 		o := OptionResult{}
 		o.Option = &option
 		if len(option.Long) != 0 {

@@ -27,6 +27,14 @@ type App struct {
 	// The app's commands, in order of display in help output.
 	Commands []Command
 
+	// Options that apply to all commands. These are prepended to every
+	// Command.Options slice.
+	//
+	// Note that -h/--help is always available on every command, and even when
+	// no command is selected. The help flag overrides any flag with -h or
+	// --help that you may provide.
+	GlobalOptions []Option
+
 	// Name of the command to run if none is supplied. Leave blank to require
 	// one.
 	DefaultCommand string
@@ -56,7 +64,12 @@ type Command struct {
 	// Text inside {curly braces} will be highlighted.
 	Description string
 
-	// This command's options, in order of display in help output.
+	// This command's options, in order of display in help output. If
+	// the parent App.GlobalOptions is set, those options will be prepended.
+	//
+	// Note that -h/--help is always available on every command, and even when
+	// no command is selected. The help flag overrides any flag with -h or
+	// --help that you may provide.
 	Options []Option
 
 	// This command's trailing arguments. It's safe to leave this blank if you

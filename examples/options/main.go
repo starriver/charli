@@ -23,6 +23,14 @@ var app = cli.App{
 		choices,
 		flags,
 	},
+	GlobalOptions: []cli.Option{
+		{
+			Short:    'g',
+			Long:     "global",
+			Flag:     true,
+			Headline: "This is a global option",
+		},
+	},
 }
 
 func main() {

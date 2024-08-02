@@ -102,7 +102,7 @@ func (app *App) Help(program string, cmd *Command) string {
 
 	printf("\n\n%s", bold("Options:"))
 
-	// Create a fake help option - makes the below logic far simpler.
+	// Aggregate all options. -h/--help is always present.
 	options := []Option{
 		{
 			Short:    'h',
@@ -111,6 +111,7 @@ func (app *App) Help(program string, cmd *Command) string {
 			Headline: "Show this help",
 		},
 	}
+	options = append(options, app.GlobalOptions...)
 	if cmd != nil {
 		options = append(options, cmd.Options...)
 	}

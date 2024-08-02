@@ -187,6 +187,38 @@ Options:
   -h/--help  Show this help
 `
 
+// Args only, all varadic
+var testHelpApp8 = App{
+	Commands: []Command{
+		{
+			Name: "cmd",
+			Options: []Option{
+				{
+					Short:    'b',
+					Flag:     true,
+					Headline: "Command",
+				},
+			},
+		},
+	},
+	GlobalOptions: []Option{
+		{
+			Short:    'a',
+			Flag:     true,
+			Headline: "Global",
+		},
+	},
+}
+
+const testHelpOutput8 = `
+Usage: program cmd [OPTIONS]
+
+Options:
+  -h/--help  Show this help
+  -a         Global
+  -b         Command
+`
+
 var testHelpCases = []struct {
 	app    *App
 	cmd    bool
@@ -224,6 +256,11 @@ var testHelpCases = []struct {
 		app:    &testHelpApp7,
 		cmd:    true,
 		output: testHelpOutput7,
+	},
+	{
+		app:    &testHelpApp8,
+		cmd:    true,
+		output: testHelpOutput8,
 	},
 }
 

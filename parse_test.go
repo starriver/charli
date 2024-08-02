@@ -8,6 +8,13 @@ import (
 )
 
 var testParseTemplate = App{
+	GlobalOptions: []Option{
+		{
+			Short: 'g',
+			Flag:  true,
+		},
+	},
+
 	Commands: []Command{
 		{
 			Name: "zero",
@@ -140,6 +147,9 @@ var testParseCases = []struct {
 		input: []string{"zero"},
 		output: Result{
 			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
 		},
 		cmdName: "zero",
 	},
@@ -193,6 +203,20 @@ var testParseCases = []struct {
 		setDefault: "zero",
 		output: Result{
 			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
+		},
+		cmdName: "zero",
+	},
+	{
+		// Test the global opt
+		input: []string{"zero", "-g"},
+		output: Result{
+			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"g": {IsSet: true},
+			},
 		},
 		cmdName: "zero",
 	},
@@ -213,6 +237,7 @@ var testParseCases = []struct {
 				"choice": {},
 				"f":      {},
 				"flag":   {},
+				"g":      {},
 			},
 		},
 		cmdName: "options",
@@ -227,6 +252,7 @@ var testParseCases = []struct {
 				"choice": {Value: "a", IsSet: true},
 				"f":      {IsSet: true},
 				"flag":   {IsSet: true},
+				"g":      {},
 			},
 		},
 		cmdName: "options",
@@ -241,6 +267,7 @@ var testParseCases = []struct {
 				"choice": {Value: "a", IsSet: true},
 				"f":      {},
 				"flag":   {},
+				"g":      {},
 			},
 		},
 		cmdName: "options",
@@ -256,6 +283,7 @@ var testParseCases = []struct {
 				"choice": {},
 				"f":      {IsSet: true},
 				"flag":   {IsSet: true},
+				"g":      {},
 			},
 		},
 		errCount: 1,
@@ -272,6 +300,7 @@ var testParseCases = []struct {
 				"choice": {},
 				"f":      {},
 				"flag":   {},
+				"g":      {},
 			},
 		},
 		errCount: 1,
@@ -288,6 +317,7 @@ var testParseCases = []struct {
 				"choice": {},
 				"f":      {},
 				"flag":   {},
+				"g":      {},
 			},
 		},
 		errCount: 3,
@@ -301,6 +331,7 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
+				"g": {},
 			},
 		},
 		cmdName: "combined",
@@ -313,6 +344,7 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {IsSet: true},
+				"g": {},
 			},
 		},
 		cmdName: "combined",
@@ -326,6 +358,7 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
+				"g": {},
 			},
 		},
 		errCount: 1,
@@ -337,6 +370,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {},
+				"g":   {},
 			},
 			Args: []string{"a", "b", "c"},
 		},
@@ -349,6 +383,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {},
+				"g":   {},
 			},
 			Args: []string{"a", "b", "c"},
 		},
@@ -362,6 +397,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {},
+				"g":   {},
 			},
 			Args: []string{"a"},
 		},
@@ -374,6 +410,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {IsSet: true},
+				"g":   {},
 			},
 			Args: []string{"a", "b", "c"},
 		},
@@ -385,6 +422,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {},
+				"g":   {},
 			},
 			Args: []string{"a", "b", "--opt"},
 		},
@@ -396,6 +434,7 @@ var testParseCases = []struct {
 			Action: Proceed,
 			Options: map[string]*OptionResult{
 				"opt": {},
+				"g":   {},
 			},
 			Args: []string{"a", "b"},
 		},
@@ -406,7 +445,10 @@ var testParseCases = []struct {
 		input: []string{"args3v", "a", "b", "c", "d"},
 		output: Result{
 			Action: Proceed,
-			Args:   []string{"a", "b", "c", "d"},
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
+			Args: []string{"a", "b", "c", "d"},
 		},
 		cmdName: "args3v",
 	},
@@ -414,7 +456,10 @@ var testParseCases = []struct {
 		input: []string{"args3v", "a", "b"},
 		output: Result{
 			Action: Proceed,
-			Args:   []string{"a", "b"},
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
+			Args: []string{"a", "b"},
 		},
 		errCount: 1,
 		cmdName:  "args3v",
@@ -423,6 +468,9 @@ var testParseCases = []struct {
 		input: []string{"args0v"},
 		output: Result{
 			Action: Proceed,
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
 		},
 		cmdName: "args0v",
 	},
@@ -430,7 +478,10 @@ var testParseCases = []struct {
 		input: []string{"args0v", "a", "b"},
 		output: Result{
 			Action: Proceed,
-			Args:   []string{"a", "b"},
+			Options: map[string]*OptionResult{
+				"g": {},
+			},
+			Args: []string{"a", "b"},
 		},
 		cmdName: "args0v",
 	},
@@ -439,6 +490,7 @@ var testParseCases = []struct {
 		useSingle: true,
 		output: Result{
 			Action: Proceed,
+
 			Options: map[string]*OptionResult{
 				"f":    {},
 				"flag": {},
@@ -556,5 +608,4 @@ func TestParse(t *testing.T) {
 			}
 		})
 	}
-
 }
