@@ -609,3 +609,31 @@ func TestParse(t *testing.T) {
 		})
 	}
 }
+
+// Special case: panicking when duplicate options configured
+func TestParsePanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+
+	app := App{
+		Commands: []Command{
+			{
+				Options: []Option{
+					{
+						Short: 'a',
+					},
+				},
+			},
+		},
+		GlobalOptions: []Option{
+			{
+				Short: 'a',
+			},
+		},
+	}
+
+	app.Parse([]string{"program"})
+}

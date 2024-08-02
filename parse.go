@@ -138,10 +138,19 @@ func (app *App) Parse(argv []string) (r Result) {
 		o := OptionResult{}
 		o.Option = &option
 		if len(option.Long) != 0 {
+			_, ok := r.Options[option.Long]
+			if ok {
+				panic(fmt.Sprintf("Duplicate option '--%s' configured", option.Long))
+			}
 			r.Options[option.Long] = &o
 		}
 		if option.Short != 0 {
-			r.Options[string(option.Short)] = &o
+			s := string(option.Short)
+			_, ok := r.Options[s]
+			if ok {
+				panic(fmt.Sprintf("Duplicate option '-%s' configured", s))
+			}
+			r.Options[s] = &o
 		}
 	}
 
