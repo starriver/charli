@@ -572,6 +572,9 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}
+			if test.errCount != 0 {
+				want.Fail = true
+			}
 
 			// We don't care about testing whether these maps are initialised.
 			if got.Options == nil {
@@ -636,4 +639,26 @@ func TestParsePanic(t *testing.T) {
 	}
 
 	app.Parse([]string{"program"})
+}
+
+// Special case: ErrorHandler provided
+func TestErrorHandler(t *testing.T) {
+	errs := 0
+	app := App{
+		Commands: []Command{
+			{},
+		},
+		ErrorHandler: func(str string) {
+			errs += 1
+		},
+	}
+
+	r := app.Parse([]string{"program", "--nope"})
+
+	if errs != 1 {
+		t.Errorf("got %d errors, want 1", errs)
+	}
+	if len(r.Errs) != 0 {
+		t.Error("r.Errs should be empty")
+	}
 }

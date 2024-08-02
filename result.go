@@ -12,9 +12,17 @@ type Result struct {
 	// populated.
 	Action Action
 
-	// All errors encountered so far. You may append your own during your own
-	// validations.
+	// All errors encountered during Parse(...). You may choose to append your
+	// errors from your own validations.
+	//
+	// Note that if App.ErrorHandler was set, errors won't be appended here by
+	// default - but Fail will still be appropriately set. So, prefer checking
+	// Fail rather than len(Errs) == 0.
 	Errs []error
+
+	// Whether any errors have occurred so far. Calling Result.Error(...) or
+	// Result.Errorf(...) will set this.
+	Fail bool
 
 	// The app you called Parse(...) on.
 	App *App
@@ -72,14 +80,30 @@ type OptionResult struct {
 
 // Note: this is the only file in the lib that provides impure functions. Nice!
 
-// Append an error to Result.Errs.
+// Raise an error. App.ErrorHandler(...) will be called if set - otherwise an
+// error will be appeneded to Result.Errs.
 func (r *Result) Error(str string) {
-	r.Errs = append(r.Errs, errors.New(str))
+	r.Fail = true
+
+	if r.App.ErrorHandler != nil {
+		r.App.ErrorHandler(str)
+	} else {
+		r.Errs = append(r.Errs, errors.New(str))
+	}
 }
 
-// Append an error to Result.Errs.
+// Raise an error. App.ErrorHandler(...) will be called if set - otherwise an
+// error will be appeneded to Result.Errs.
 func (r *Result) Errorf(format string, a ...any) {
-	r.Errs = append(r.Errs, fmt.Errorf(format, a...))
+	r.Fail = true
+
+	str := fmt.Sprintf(format, a...)
+
+	if r.App.ErrorHandler != nil {
+		r.App.ErrorHandler(str)
+	} else {
+		r.Errs = append(r.Errs, errors.New(str))
+	}
 }
 
 // Shorthand for r.Command.Run(&r).
