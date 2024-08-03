@@ -63,7 +63,13 @@ func (app *App) Help(program string, cmd *Command) string {
 
 		description = app.Description
 	} else {
-		printf("%s [%s]", cmd.Name, hi("OPTIONS"))
+		if cmd.Name == app.DefaultCommand {
+			printf("[%s] ", cmd.Name)
+		} else if len(app.Commands) != 1 {
+			printf("%s ", cmd.Name)
+		}
+
+		printf("[%s]", hi("OPTIONS"))
 
 		args := &cmd.Args
 

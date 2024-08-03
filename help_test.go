@@ -40,7 +40,7 @@ Commands:
   cmd2  Headline2
 `
 
-// Default command, no description, 1 subcommand
+// Default command, no description, 2 subcommands
 var testHelpApp2 = App{
 	Headline:       "Headline",
 	DefaultCommand: "cmd1",
@@ -48,6 +48,10 @@ var testHelpApp2 = App{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
+		},
+		{
+			Name:     "cmd2",
+			Headline: "Headline2",
 		},
 	},
 }
@@ -61,13 +65,14 @@ Options:
 
 Commands:
   cmd1  Headline1
+  cmd2  Headline2
 `
 
 // No app headline, command help with headline, description, flags
 var testHelpApp3 = App{
 	Commands: []Command{
 		{
-			Name:        "cmd",
+			Name:        "cmd1",
 			Headline:    "Headline",
 			Description: "\nThis is a {description}\n",
 			Options: []Option{
@@ -88,11 +93,14 @@ var testHelpApp3 = App{
 				},
 			},
 		},
+		{
+			Name: "cmd2",
+		},
 	},
 }
 
 const testHelpOutput3 = `
-Usage: program cmd [OPTIONS]
+Usage: program cmd1 [OPTIONS]
 
   Headline
 
@@ -109,17 +117,20 @@ Options:
 var testHelpApp4 = App{
 	Commands: []Command{
 		{
-			Name: "cmd",
+			Name: "cmd1",
 			Args: Args{
 				Count:    3,
 				Metavars: []string{"A", "B", "C"},
 			},
 		},
+		{
+			Name: "cmd2",
+		},
 	},
 }
 
 const testHelpOutput4 = `
-Usage: program cmd [OPTIONS] A B C
+Usage: program cmd1 [OPTIONS] A B C
 
 Options:
   -h/--help  Show this help
@@ -129,17 +140,20 @@ Options:
 var testHelpApp5 = App{
 	Commands: []Command{
 		{
-			Name: "cmd",
+			Name: "cmd1",
 			Args: Args{
 				Count:    3,
 				Metavars: []string{"A"},
 			},
 		},
+		{
+			Name: "cmd2",
+		},
 	},
 }
 
 const testHelpOutput5 = `
-Usage: program cmd [OPTIONS] A ARG ARG
+Usage: program cmd1 [OPTIONS] A ARG ARG
 
 Options:
   -h/--help  Show this help
@@ -149,18 +163,21 @@ Options:
 var testHelpApp6 = App{
 	Commands: []Command{
 		{
-			Name: "cmd",
+			Name: "cmd1",
 			Args: Args{
 				Count:    2,
 				Varadic:  true,
 				Metavars: []string{"A", "B", "C"},
 			},
 		},
+		{
+			Name: "cmd2",
+		},
 	},
 }
 
 const testHelpOutput6 = `
-Usage: program cmd [OPTIONS] A B [C...]
+Usage: program cmd1 [OPTIONS] A B [C...]
 
 Options:
   -h/--help  Show this help
@@ -170,28 +187,31 @@ Options:
 var testHelpApp7 = App{
 	Commands: []Command{
 		{
-			Name: "cmd",
+			Name: "cmd1",
 			Args: Args{
 				Count:    0,
 				Varadic:  true,
 				Metavars: []string{"A", "B", "C"},
 			},
 		},
+		{
+			Name: "cmd2",
+		},
 	},
 }
 
 const testHelpOutput7 = `
-Usage: program cmd [OPTIONS] [A] [B] [C...]
+Usage: program cmd1 [OPTIONS] [A] [B] [C...]
 
 Options:
   -h/--help  Show this help
 `
 
-// Args only, all varadic
+// With global options
 var testHelpApp8 = App{
 	Commands: []Command{
 		{
-			Name: "cmd",
+			Name: "cmd1",
 			Options: []Option{
 				{
 					Short:    'b',
@@ -199,6 +219,9 @@ var testHelpApp8 = App{
 					Headline: "Command",
 				},
 			},
+		},
+		{
+			Name: "cmd2",
 		},
 	},
 	GlobalOptions: []Option{
@@ -211,12 +234,49 @@ var testHelpApp8 = App{
 }
 
 const testHelpOutput8 = `
-Usage: program cmd [OPTIONS]
+Usage: program cmd1 [OPTIONS]
 
 Options:
   -h/--help  Show this help
   -a         Global
   -b         Command
+`
+
+// Command help with default command
+var testHelpApp9 = App{
+	Commands: []Command{
+		{
+			Name: "cmd1",
+		},
+		{
+			Name: "cmd2",
+		},
+	},
+	DefaultCommand: "cmd1",
+}
+
+const testHelpOutput9 = `
+Usage: program [cmd1] [OPTIONS]
+
+Options:
+  -h/--help  Show this help
+`
+
+// Command help when only command
+var testHelpApp10 = App{
+	Commands: []Command{
+		{
+			// nb. name should be ignored
+			Name: "cmd1",
+		},
+	},
+}
+
+const testHelpOutput10 = `
+Usage: program [OPTIONS]
+
+Options:
+  -h/--help  Show this help
 `
 
 var testHelpCases = []struct {
@@ -262,9 +322,19 @@ var testHelpCases = []struct {
 		cmd:    true,
 		output: testHelpOutput8,
 	},
+	{
+		app:    &testHelpApp9,
+		cmd:    true,
+		output: testHelpOutput9,
+	},
+	{
+		app:    &testHelpApp10,
+		cmd:    true,
+		output: testHelpOutput10,
+	},
 }
 
-func TestHelpGlobal(t *testing.T) {
+func TestHelp(t *testing.T) {
 	color.NoColor = true
 
 	for i, test := range testHelpCases {
