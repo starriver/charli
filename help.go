@@ -42,12 +42,31 @@ func (app *App) Help(program string, cmd *Command) string {
 		})
 	}
 
+	// Aggregate all options now - we need to know whether to print [OPTIONS] in
+	// the usage line.
+	options := []Option{}
+	if app.HelpAccess == 0 || (app.HelpAccess&HelpFlag) != 0 {
+		// Make a fake help option.
+		options = []Option{
+			{
+				Short:    'h',
+				Long:     "help",
+				Flag:     true,
+				Headline: "Show this help",
+			},
+		}
+	}
+	options = append(options, app.GlobalOptions...)
+	if cmd != nil {
+		options = append(options, cmd.Options...)
+	}
+
 	if app.Headline != "" {
 		printf("%s\n", app.Headline)
 	}
 
 	basename := filepath.Base(program)
-	printf("%s %s ", bold("Usage:"), basename)
+	printf("%s %s", bold("Usage:"), basename)
 
 	var description string
 
@@ -56,20 +75,24 @@ func (app *App) Help(program string, cmd *Command) string {
 		if app.DefaultCommand != "" {
 			cmdStr = fmt.Sprintf("[%s]", cmdStr)
 		}
-		printf(
-			"[%s] %s [...]",
-			hi("OPTIONS"), cmdStr,
-		)
+		if len(options) != 0 {
+			printf(" [%s]", hi("OPTIONS"))
+		}
+		printf(" %s [...]", cmdStr)
 
 		description = app.Description
 	} else {
-		if cmd.Name == app.DefaultCommand {
-			printf("[%s] ", cmd.Name)
-		} else if len(app.Commands) != 1 {
-			printf("%s ", cmd.Name)
+		if len(app.Commands) != 1 {
+			if cmd.Name == app.DefaultCommand {
+				printf(" [%s]", cmd.Name)
+			} else {
+				printf(" %s", cmd.Name)
+			}
 		}
 
-		printf("[%s]", hi("OPTIONS"))
+		if len(options) != 0 {
+			printf(" [%s]", hi("OPTIONS"))
+		}
 
 		args := &cmd.Args
 
@@ -106,97 +129,88 @@ func (app *App) Help(program string, cmd *Command) string {
 		printf("\n\n  %s", description)
 	}
 
-	printf("\n\n%s", bold("Options:"))
-
-	// Aggregate all options. -h/--help is always present.
-	options := []Option{
-		{
-			Short:    'h',
-			Long:     "help",
-			Flag:     true,
-			Headline: "Show this help",
-		},
-	}
-	options = append(options, app.GlobalOptions...)
-	if cmd != nil {
-		options = append(options, cmd.Options...)
-	}
-
-	// Set up a left-align.
+	// Set up a left-align. These aren't in the following block because we reuse
+	// these variables to render the command listing later.
 	left := make([]string, len(options))
 	lengths := make([]int, len(options))
 	leftMax := 0
 
-	slash := grey("/")
+	if len(options) != 0 {
+		printf("\n\n%s", bold("Options:"))
 
-	for i, option := range options {
-		l := 0
+		slash := grey("/")
 
-		if option.Short != 0 {
-			left[i] += hi("-" + string(option.Short))
-			l += 2
-			if option.Long != "" {
-				left[i] += slash
-				l += 1
-			}
-		}
-		if option.Long != "" {
-			left[i] += hi("--" + option.Long)
-			l += 2 + len(option.Long)
-		}
+		for i, option := range options {
+			l := 0
 
-		if !option.Flag {
-			metavar := option.Metavar
-			if metavar == "" {
-				metavar = "VALUE"
-			}
-			left[i] += " " + hi(metavar)
-			l += 1 + len(metavar)
-		}
-
-		if l > leftMax {
-			leftMax = l
-		}
-		lengths[i] = l
-	}
-
-	// Add 2 more spaces of padding.
-	leftMax += 2
-
-	// These may be used repeatedly for choices.
-	pipe := grey("|")
-	bracketOpen := grey("[")
-	bracketClose := grey("]")
-
-	for i, str := range left {
-		printf("\n  %s", str)
-
-		option := &options[i]
-		hasHeadline := option.Headline != ""
-		hasChoices := len(option.Choices) != 0
-		if hasHeadline || hasChoices {
-			print(strings.Repeat(" ", leftMax-lengths[i]))
-
-			if hasHeadline {
-				print(highlight(option.Headline))
-				if hasChoices {
-					print(" ")
+			if option.Short != 0 {
+				left[i] += hi("-" + string(option.Short))
+				l += 2
+				if option.Long != "" {
+					left[i] += slash
+					l += 1
 				}
 			}
-			if hasChoices {
-				print(bracketOpen)
-				for i, c := range option.Choices {
-					print(hi(c))
-					if i != len(option.Choices)-1 {
-						print(pipe)
+			if option.Long != "" {
+				left[i] += hi("--" + option.Long)
+				l += 2 + len(option.Long)
+			}
+
+			if !option.Flag {
+				metavar := option.Metavar
+				if metavar == "" {
+					metavar = "VALUE"
+				}
+				left[i] += " " + hi(metavar)
+				l += 1 + len(metavar)
+			}
+
+			if l > leftMax {
+				leftMax = l
+			}
+			lengths[i] = l
+		}
+
+		// Add 2 more spaces of padding.
+		leftMax += 2
+
+		// These may be used repeatedly for choices.
+		pipe := grey("|")
+		bracketOpen := grey("[")
+		bracketClose := grey("]")
+
+		for i, str := range left {
+			printf("\n  %s", str)
+
+			option := &options[i]
+			hasHeadline := option.Headline != ""
+			hasChoices := len(option.Choices) != 0
+			if hasHeadline || hasChoices {
+				print(strings.Repeat(" ", leftMax-lengths[i]))
+
+				if hasHeadline {
+					print(highlight(option.Headline))
+					if hasChoices {
+						print(" ")
 					}
 				}
-				print(bracketClose)
+				if hasChoices {
+					print(bracketOpen)
+					for i, c := range option.Choices {
+						print(hi(c))
+						if i != len(option.Choices)-1 {
+							print(pipe)
+						}
+					}
+					print(bracketClose)
+				}
 			}
 		}
+
 	}
 
 	print("\n")
+
 	if cmd != nil {
 		return builder.String()
 	}
@@ -204,6 +218,15 @@ func (app *App) Help(program string, cmd *Command) string {
 	printf("\n%s", bold("Commands:"))
 
 	cmds := app.Commands
+	if (app.HelpAccess & HelpCommand) != 0 {
+		// Make a fake help command.
+		helpCommand := Command{
+			Name:     "help",
+			Headline: "Show this help",
+		}
+		cmds = append([]Command{helpCommand}, cmds...)
+	}
+
 	lengths = make([]int, len(cmds))
 	leftMax = 0
 
