@@ -34,7 +34,12 @@ func (app *App) Parse(argv []string) (r Result) {
 		r.Command = &app.Commands[0]
 	}
 
-	// Start by scanning for special args: -- and -h/--help. This is done
+	ha := app.HelpAccess
+	if ha == 0 {
+		ha = HelpFlag
+	}
+
+	// Start by scanning for special args: -- and -h/--help/help. This is done
 	// beforehand because (a) we don't want to show any other errors when
 	// requesting help, (b) we need to check for -- with respect to the help
 	// options so we might as well scan for it now, and (c) it's a
@@ -47,17 +52,19 @@ func (app *App) Parse(argv []string) (r Result) {
 			break
 		}
 
-		if !(arg == "-h" || arg == "--help") {
+		isHelpFlag := (ha&HelpFlag != 0) && (arg == "-h" || arg == "--help")
+		isHelpCommand := (ha&HelpCommand != 0) && i < 2 && arg == "help"
+		if !(isHelpFlag || isHelpCommand) {
 			continue
 		}
 
-		// Show command help if user runs 'program -h command [...]' or
-		// 'program command -h [...]' - ie. the 1st or 2nd flag mustn't look
-		// like an option.
 		invalidCmd := true
+
 		if !singleCmd && nargs > 1 {
+			// Check the 1st and 2nd args for a command.
 			for i := range 2 {
-				if isOption(args[i]) {
+				// We need to disregard 'help' as a command here if necessary:
+				if isOption(args[i]) || ((ha&HelpCommand != 0) && args[i] == "help") {
 					continue
 				}
 				r.Command = findCommand(args[i])

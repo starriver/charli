@@ -39,6 +39,12 @@ type App struct {
 	// one.
 	DefaultCommand string
 
+	// How users can access help. This is a bitmask: either HelpFlag,
+	// HelpCommand or both.
+	//
+	// If nothing is supplied, will default to HelpFlag.
+	HelpAccess HelpAccess
+
 	// Set this if you'd prefer to handle Parse(...) errors as they happen. The
 	// default behaviour (if this isn't set) is to aggregate them in the
 	// returned Result.Errs slice.
@@ -138,3 +144,10 @@ type Args struct {
 	// names will be [bracketed] appropriately if Varadic is set.
 	Metavars []string
 }
+
+type HelpAccess uint8
+
+const (
+	HelpFlag HelpAccess = 1 << iota
+	HelpCommand
+)

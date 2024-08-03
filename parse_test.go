@@ -104,6 +104,7 @@ var testParseCases = []struct {
 	input      []string
 	setDefault string
 	useSingle  bool
+	helpAccess HelpAccess
 	output     Result
 	cmdName    string
 	errCount   int
@@ -226,6 +227,65 @@ var testParseCases = []struct {
 		output: Result{
 			Action: HelpOK,
 		},
+	},
+	{
+		input: []string{"help"},
+		output: Result{
+			Action: Fatal,
+		},
+		errCount: 1,
+	},
+	{
+		input:      []string{"help"},
+		helpAccess: HelpCommand,
+		output: Result{
+			Action: HelpOK,
+		},
+	},
+	{
+		input:      []string{"help", "help"},
+		helpAccess: HelpCommand,
+		output: Result{
+			Action: HelpError,
+		},
+	},
+	{
+		input:      []string{"help", "zero"},
+		helpAccess: HelpCommand,
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "zero",
+	},
+	{
+		input:      []string{"zero", "help"},
+		helpAccess: HelpCommand,
+		output: Result{
+			Action: HelpOK,
+		},
+		cmdName: "zero",
+	},
+	{
+		input:      []string{"help", "-h"},
+		helpAccess: HelpFlag | HelpCommand,
+		output: Result{
+			Action: HelpError,
+		},
+	},
+	{
+		input:      []string{"-h", "help"},
+		helpAccess: HelpFlag | HelpCommand,
+		output: Result{
+			Action: HelpError,
+		},
+	},
+	{
+		input:      []string{"help", "zero", "-a"},
+		helpAccess: HelpCommand,
+		output: Result{
+			Action: HelpError,
+		},
+		cmdName: "zero",
 	},
 	{
 		input: []string{"options"},
@@ -554,6 +614,7 @@ func TestParse(t *testing.T) {
 			if test.setDefault != "" {
 				app.DefaultCommand = test.setDefault
 			}
+			app.HelpAccess = test.helpAccess
 
 			got := app.Parse(input)
 			want := test.output
