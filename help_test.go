@@ -265,10 +265,7 @@ Options:
 // Command help when only command
 var testHelpApp10 = App{
 	Commands: []Command{
-		{
-			// nb. name should be ignored
-			Name: "cmd1",
-		},
+		{},
 	},
 }
 
@@ -277,6 +274,84 @@ Usage: program [OPTIONS]
 
 Options:
   -h/--help  Show this help
+`
+
+// Help as command
+var testHelpApp11 = App{
+	Description: "\nDescription\n", // This is here to test spacing
+	Commands: []Command{
+		{
+			Name:     "cmd1",
+			Headline: "Headline1",
+		},
+		{
+			Name:     "cmd2",
+			Headline: "Headline2",
+		},
+	},
+	HelpAccess: HelpCommand,
+}
+
+const testHelpOutput11 = `
+Usage: program COMMAND [...]
+
+  Description
+
+Commands:
+  help  Show this help
+  cmd1  Headline1
+  cmd2  Headline2
+`
+
+// Help as flag & command
+var testHelpApp12 = App{
+	Description: "\nDescription\n", // This is here to test spacing
+	Commands: []Command{
+		{
+			Name:     "cmd1",
+			Headline: "Headline1",
+		},
+		{
+			Name:     "cmd2",
+			Headline: "Headline2",
+		},
+	},
+	HelpAccess: HelpFlag | HelpCommand,
+}
+
+const testHelpOutput12 = `
+Usage: program [OPTIONS] COMMAND [...]
+
+  Description
+
+Options:
+  -h/--help  Show this help
+
+Commands:
+  help  Show this help
+  cmd1  Headline1
+  cmd2  Headline2
+`
+
+// Command help, help as command, and no command options
+var testHelpApp13 = App{
+	Commands: []Command{
+		{
+			Name:     "cmd1",
+			Headline: "Headline1",
+		},
+		{
+			Name:     "cmd2",
+			Headline: "Headline2",
+		},
+	},
+	HelpAccess: HelpCommand,
+}
+
+const testHelpOutput13 = `
+Usage: program cmd1
+
+  Headline1
 `
 
 var testHelpCases = []struct {
@@ -331,6 +406,19 @@ var testHelpCases = []struct {
 		app:    &testHelpApp10,
 		cmd:    true,
 		output: testHelpOutput10,
+	},
+	{
+		app:    &testHelpApp11,
+		output: testHelpOutput11,
+	},
+	{
+		app:    &testHelpApp12,
+		output: testHelpOutput12,
+	},
+	{
+		app:    &testHelpApp13,
+		cmd:    true,
+		output: testHelpOutput13,
 	},
 }
 
