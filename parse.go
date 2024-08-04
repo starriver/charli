@@ -20,6 +20,9 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	singleCmd := len(app.Commands) == 1
 	if singleCmd {
+		if app.DefaultCommand != "" {
+			panic("Must have > 1 command when setting DefaultCommand")
+		}
 		r.Command = &app.Commands[0]
 	} else {
 		cmdMap = make(map[string]*Command, len(app.Commands))

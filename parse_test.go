@@ -709,8 +709,20 @@ func TestParsePanic(t *testing.T) {
 			{
 				Name: "cmd1",
 			},
+			{
+				Name: "cmd2",
+			},
 		},
-		DefaultCommand: "cmd2",
+		DefaultCommand: "cmd3",
+	}
+
+	defaultWithSingleCmd := App{
+		Commands: []Command{
+			{
+				Name: "cmd1",
+			},
+		},
+		DefaultCommand: "cmd1",
 	}
 
 	expectPanic := func(t *testing.T) {
@@ -732,6 +744,11 @@ func TestParsePanic(t *testing.T) {
 	t.Run("invalid default command", func(t *testing.T) {
 		defer expectPanic(t)
 		invalidDefaultCmd.Parse([]string{"program"})
+	})
+
+	t.Run("default command with single command", func(t *testing.T) {
+		defer expectPanic(t)
+		defaultWithSingleCmd.Parse([]string{"program"})
 	})
 }
 
