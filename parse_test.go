@@ -674,15 +674,20 @@ func TestParse(t *testing.T) {
 	}
 }
 
-// Special case: panicking when duplicate options configured
+// Special cases that panic
 func TestParsePanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
+	dupeCmd := App{
+		Commands: []Command{
+			{
+				Name: "cmd",
+			},
+			{
+				Name: "cmd",
+			},
+		},
+	}
 
-	app := App{
+	dupeOption := App{
 		Commands: []Command{
 			{
 				Options: []Option{
@@ -699,7 +704,35 @@ func TestParsePanic(t *testing.T) {
 		},
 	}
 
-	app.Parse([]string{"program"})
+	invalidDefaultCmd := App{
+		Commands: []Command{
+			{
+				Name: "cmd1",
+			},
+		},
+		DefaultCommand: "cmd2",
+	}
+
+	expectPanic := func(t *testing.T) {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}
+
+	t.Run("dupe command", func(t *testing.T) {
+		defer expectPanic(t)
+		dupeCmd.Parse([]string{"program"})
+	})
+
+	t.Run("dupe option", func(t *testing.T) {
+		defer expectPanic(t)
+		dupeOption.Parse([]string{"program"})
+	})
+
+	t.Run("invalid default command", func(t *testing.T) {
+		defer expectPanic(t)
+		invalidDefaultCmd.Parse([]string{"program"})
+	})
 }
 
 // Special case: ErrorHandler provided
