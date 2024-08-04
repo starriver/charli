@@ -16,22 +16,21 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	r.App = app
 
-	// NOTE: not bothering with a map for command names, because we'll only need
-	// to iterate through Commands a maximum of twice per parse. With such a
-	// (likely) tiny array, it'd likely be more expensive to set up the map in
-	// the first place.
-	findCommand := func(str string) *Command {
-		for _, cmd := range app.Commands {
-			if cmd.Name == str {
-				return &cmd
-			}
-		}
-		return nil
-	}
+	var cmdMap map[string]*Command
 
 	singleCmd := len(app.Commands) == 1
 	if singleCmd {
 		r.Command = &app.Commands[0]
+	} else {
+		cmdMap = make(map[string]*Command, len(app.Commands))
+		for _, cmd := range app.Commands {
+			if _, ok := cmdMap[cmd.Name]; ok {
+				panic(
+					fmt.Sprintf("Duplicate command '%s' configured", cmd.Name),
+				)
+			}
+			cmdMap[cmd.Name] = &cmd
+		}
 	}
 
 	ha := app.HelpAccess
@@ -67,7 +66,7 @@ func (app *App) Parse(argv []string) (r Result) {
 				if isOption(args[i]) || ((ha&HelpCommand != 0) && args[i] == "help") {
 					continue
 				}
-				r.Command = findCommand(args[i])
+				r.Command, _ = cmdMap[args[i]]
 				// If invalid, continue to display help anyway.
 				if r.Command == nil {
 					r.Errorf("'%s' isn't a valid command.", args[i])
@@ -106,7 +105,15 @@ func (app *App) Parse(argv []string) (r Result) {
 		// command, use the default.
 		possibleCommand := nargs > 0 && !isOption(args[0])
 		if app.DefaultCommand != "" && !possibleCommand {
-			r.Command = findCommand(app.DefaultCommand)
+			r.Command, _ = cmdMap[app.DefaultCommand]
+			if r.Command == nil {
+				panic(
+					fmt.Sprintf(
+						"Unknown default command '%s' configured",
+						app.DefaultCommand,
+					),
+				)
+			}
 			cmdArgs = args
 		} else {
 			if nargs == 0 { // Implicit: app.DefaultCommand can't be set here.
@@ -121,7 +128,7 @@ func (app *App) Parse(argv []string) (r Result) {
 				return
 			}
 
-			r.Command = findCommand(args[0])
+			r.Command, _ = cmdMap[args[0]]
 			if r.Command == nil {
 				r.Errorf(
 					"'%s' isn't a command - try `%s --help`",
