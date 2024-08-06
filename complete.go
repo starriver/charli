@@ -13,6 +13,22 @@ func quote(arg string) string {
 func (app *App) CompleteFish(w io.Writer, program string) {
 	prefix := fmt.Sprintf("complete -c %s -k", quote(program))
 
+	describeCmd := func(cmd *Command) {
+		fmt.Fprintf(
+			w,
+			"%s -n __fish_cmdname_needs_subcommand -a %s",
+			prefix,
+			quote(cmd.Name),
+		)
+		if len(cmd.Headline) != 0 {
+			fmt.Fprintf(w, " -d %s", quote(cmd.Headline))
+		}
+		fmt.Fprint(w, "\n")
+	}
+
+	// Note that this only provides the complete flags without the prefix. Needs
+	// to be flexible enough for both single- and multi-command operation (see
+	// below).
 	describeOpt := func(opt *Option) {
 		if opt.Short != 0 {
 			fmt.Fprintf(w, " -s %s", quote(string(opt.Short)))
@@ -35,8 +51,17 @@ func (app *App) CompleteFish(w io.Writer, program string) {
 		}
 	}
 
+	if (app.HelpAccess & HelpCommand) != 0 {
+		describeCmd(&fakeHelpCmd)
+	}
+
+	var withHelpOption []Option
+	if (app.HelpAccess & HelpFlag) != 0 {
+		withHelpOption = []Option{fakeHelpOption}
+	}
+
 	if len(app.Commands) == 1 {
-		for _, opt := range app.Commands[0].Options {
+		for _, opt := range append(withHelpOption, app.Commands[0].Options...) {
 			fmt.Fprint(w, prefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")
@@ -45,19 +70,14 @@ func (app *App) CompleteFish(w io.Writer, program string) {
 	}
 
 	for _, cmd := range app.Commands {
-		fmt.Fprintf(
-			w,
-			"%s -n __fish_cmdname_needs_subcommand -a %s\n",
-			prefix,
-			quote(cmd.Name),
-		)
+		describeCmd(&cmd)
 
 		// Yes this is horrifically ugly.
 		optPrefix := fmt.Sprintf(" -n %s", quote(
 			fmt.Sprintf("__fish_cmdname_using_subcommand %s", cmd.Name),
 		))
 
-		for _, opt := range cmd.Options {
+		for _, opt := range append(withHelpOption, cmd.Options...) {
 			fmt.Fprint(w, prefix, optPrefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")
