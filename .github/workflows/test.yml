@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [main]
+    branches: [main, golangci-lint]
   pull_request:
     branches: [main]
 
@@ -10,5 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: asdf-vm/actions/install@v3
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59
       - run: go build -v ./...
       - run: go test -v ./...
