@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [main, golangci-lint]
+    branches: [main]
   pull_request:
     branches: [main]
 
