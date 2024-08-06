@@ -10,6 +10,19 @@ import (
 	"github.com/fatih/color"
 )
 
+// Note that these aren't used by Parse(...) - -h/--help/help are treated as
+// special symbols there.
+var fakeHelpOption = Option{
+	Short:    'h',
+	Long:     "help",
+	Flag:     true,
+	Headline: "Show this help",
+}
+var fakeHelpCmd = Command{
+	Name:     "help",
+	Headline: "Show this help",
+}
+
 func (app *App) Help(w io.Writer, program string, cmd *Command) {
 	print := func(str string) {
 		fmt.Fprint(w, str)
@@ -46,15 +59,7 @@ func (app *App) Help(w io.Writer, program string, cmd *Command) {
 	// the usage line.
 	options := []Option{}
 	if app.HelpAccess == 0 || (app.HelpAccess&HelpFlag) != 0 {
-		// Make a fake help option.
-		options = []Option{
-			{
-				Short:    'h',
-				Long:     "help",
-				Flag:     true,
-				Headline: "Show this help",
-			},
-		}
+		options = []Option{fakeHelpOption}
 	}
 	options = append(options, app.GlobalOptions...)
 	if cmd != nil {
@@ -219,12 +224,7 @@ func (app *App) Help(w io.Writer, program string, cmd *Command) {
 
 	cmds := app.Commands
 	if (app.HelpAccess & HelpCommand) != 0 {
-		// Make a fake help command.
-		helpCommand := Command{
-			Name:     "help",
-			Headline: "Show this help",
-		}
-		cmds = append([]Command{helpCommand}, cmds...)
+		cmds = append([]Command{fakeHelpCmd}, cmds...)
 	}
 
 	lengths = make([]int, len(cmds))
