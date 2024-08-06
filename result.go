@@ -113,5 +113,5 @@ func (r *Result) RunCommand() bool {
 
 // Print app/command help to stderr.
 func (r *Result) PrintHelp() {
-	fmt.Fprint(os.Stderr, r.App.Help(os.Args[0], r.Command))
+	r.App.Help(os.Stderr, os.Args[0], r.Command)
 }

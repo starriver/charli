@@ -64,7 +64,7 @@ func main() {
 	case cli.HelpError:
 		// User didn't ask for help (or asked wonkily) - but display it anyway.
 		// Note that r.PrintHelp() is exactly equivalent to this line:
-		fmt.Fprint(os.Stderr, app.Help(os.Args[0], r.Command))
+		app.Help(os.Stderr, os.Args[0], r.Command)
 
 	case cli.Fatal:
 		// Fatal error, nothing else to do.

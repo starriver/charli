@@ -2,6 +2,7 @@ package charli
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -9,16 +10,12 @@ import (
 	"github.com/fatih/color"
 )
 
-func (app *App) Help(program string, cmd *Command) string {
-	builder := strings.Builder{}
-	// This is a naive preallocation guess based on our own usage.
-	builder.Grow(1024)
-
-	print := func(s string) {
-		builder.WriteString(s)
+func (app *App) Help(w io.Writer, program string, cmd *Command) {
+	print := func(str string) {
+		fmt.Fprint(w, str)
 	}
 	printf := func(format string, a ...any) {
-		builder.WriteString(fmt.Sprintf(format, a...))
+		fmt.Fprintf(w, format, a...)
 	}
 
 	// Default to blue.
@@ -215,7 +212,7 @@ func (app *App) Help(program string, cmd *Command) string {
 	print("\n")
 
 	if cmd != nil {
-		return builder.String()
+		return
 	}
 
 	printf("\n%s", bold("Commands:"))
@@ -252,5 +249,4 @@ func (app *App) Help(program string, cmd *Command) string {
 	}
 
 	print("\n")
-	return builder.String()
 }

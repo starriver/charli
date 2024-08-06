@@ -1,6 +1,7 @@
 package charli
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -431,7 +432,10 @@ func TestHelp(t *testing.T) {
 			if test.cmd {
 				cmd = &test.app.Commands[0]
 			}
-			got := test.app.Help("program", cmd)
+
+			var buf bytes.Buffer
+			test.app.Help(&buf, "program", cmd)
+			got := buf.String()
 			// Slicing test.output here to remove initial newline
 			want := test.output[1:]
 
