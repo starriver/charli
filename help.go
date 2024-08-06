@@ -11,6 +11,9 @@ import (
 
 func (app *App) Help(program string, cmd *Command) string {
 	builder := strings.Builder{}
+	// This is a naive preallocation guess based on our own usage.
+	builder.Grow(1024)
+
 	print := func(s string) {
 		builder.WriteString(s)
 	}
