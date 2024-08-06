@@ -3,6 +3,7 @@ package charli
 import (
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 )
 
@@ -10,7 +11,31 @@ func quote(arg string) string {
 	return fmt.Sprintf("'%s'", strings.ReplaceAll(arg, "'", "\\'"))
 }
 
-func (app *App) CompleteFish(w io.Writer, program string) {
+// Generate Bash completions.
+func (app *App) GenerateBashCompletions(w io.Writer, program string, env string) {
+	program = quote(program)
+
+	re := regexp.MustCompile(`['"\\]`)
+	funcName := fmt.Sprintf(
+		"_complete_%s",
+		re.ReplaceAllString(program, ""),
+	)
+
+	// Write a function that calls the program with env set
+	// TODO: we'll need to separate out the COMP args
+	fmt.Fprintf(w, "%s() {  \n%s=1 %s $@\n}\n", funcName, env, program)
+
+	fmt.Fprintf(
+		w,
+		"complete -o bashdefault -F %s %s",
+		funcName,
+		program,
+	)
+}
+
+// Generate Fish completions. These are pretty comprehensive and often don't
+// need to call the binary at all.
+func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 	prefix := fmt.Sprintf("complete -c %s -k", quote(program))
 
 	describeCmd := func(cmd *Command) {
