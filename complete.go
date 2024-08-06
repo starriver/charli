@@ -7,27 +7,56 @@ import (
 	"strings"
 )
 
+// Prints newline-separated shell completions. i should be the index of the arg
+// being completed in args.
+//
+// When calling this function as a result of a generated completion script,
+// remember to remove the special trigger flag from args beforehand.
+func Complete(w io.Writer, i int, args []string) {
+	// TODO
+}
+
 func quote(arg string) string {
 	return fmt.Sprintf("'%s'", strings.ReplaceAll(arg, "'", "\\'"))
 }
 
-// Generate Bash completions.
-func (app *App) GenerateBashCompletions(w io.Writer, program string, env string) {
+// Generate a bash completion script.
+//
+// program should be the program name (which will presumably be in the user's
+// PATH). flag should be a special trigger flag, *including* hyphen prefixes,
+// which your program should use to bypass normal execution and generate
+// completions instead (presumably using Complete(...)).
+//
+// flag can be anything you want, but don't use anything ambiguous to your CLI.
+// If in doubt, use "--_complete".
+func (app *App) GenerateBashCompletions(w io.Writer, program, flag string) {
 	program = quote(program)
 
-	re := regexp.MustCompile(`['"\\]`)
+	// We want a valid name for the completion function, so strip illegal
+	// characters from the program name.
+	re := regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 	funcName := fmt.Sprintf(
 		"_complete_%s",
 		re.ReplaceAllString(program, ""),
 	)
 
-	// Write a function that calls the program with env set
-	// TODO: we'll need to separate out the COMP args
-	fmt.Fprintf(w, "%s() {  \n%s=1 %s $@\n}\n", funcName, env, program)
-
+	// Write a function that calls the program with the required completion
+	// data.
+	fmt.Fprintf(w, "%s() {\n", funcName)
 	fmt.Fprintf(
 		w,
-		"complete -o bashdefault -F %s %s",
+		"\tfor c in $(%s %s $COMP_CWORD $COMP_WORDS); do\n",
+		program,
+		flag,
+	)
+	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"$c\")")
+	fmt.Fprintln(w, "\tdone")
+	fmt.Fprintln(w, "}")
+
+	// Complete using the function.
+	fmt.Fprintf(
+		w,
+		"complete -o bashdefault -F %s %s\n",
 		funcName,
 		program,
 	)
