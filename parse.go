@@ -69,7 +69,7 @@ func (app *App) Parse(argv []string) (r Result) {
 				if isOption(args[i]) || ((ha&HelpCommand != 0) && args[i] == "help") {
 					continue
 				}
-				r.Command, _ = cmdMap[args[i]]
+				r.Command = cmdMap[args[i]]
 				// If invalid, continue to display help anyway.
 				if r.Command == nil {
 					r.Errorf("'%s' isn't a valid command.", args[i])
@@ -108,7 +108,7 @@ func (app *App) Parse(argv []string) (r Result) {
 		// command, use the default.
 		possibleCommand := nargs > 0 && !isOption(args[0])
 		if app.DefaultCommand != "" && !possibleCommand {
-			r.Command, _ = cmdMap[app.DefaultCommand]
+			r.Command = cmdMap[app.DefaultCommand]
 			if r.Command == nil {
 				panic(
 					fmt.Sprintf(
@@ -131,7 +131,7 @@ func (app *App) Parse(argv []string) (r Result) {
 				return
 			}
 
-			r.Command, _ = cmdMap[args[0]]
+			r.Command = cmdMap[args[0]]
 			if r.Command == nil {
 				r.Errorf(
 					"'%s' isn't a command - try `%s --help`",
