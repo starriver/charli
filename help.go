@@ -58,7 +58,7 @@ func (app *App) Help(w io.Writer, program string, cmd *Command) {
 	// Aggregate all options now - we need to know whether to print [OPTIONS] in
 	// the usage line.
 	options := []Option{}
-	if app.HelpAccess == 0 || (app.HelpAccess&HelpFlag) != 0 {
+	if app.hasHelpFlags() {
 		options = []Option{fakeHelpOption}
 	}
 	options = append(options, app.GlobalOptions...)
