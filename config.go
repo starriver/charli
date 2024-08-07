@@ -154,13 +154,6 @@ const (
 	HelpCommand
 )
 
-func (app *App) cmdsWithHelp() []Command {
-	if app.HelpAccess&HelpCommand != 0 {
-		return append([]Command{fakeHelpCmd}, app.Commands...)
-	}
-	return app.Commands
-}
-
 func (app *App) hasHelpFlags() bool {
 	return app.HelpAccess == 0 || app.HelpAccess&HelpFlag != 0
 }
