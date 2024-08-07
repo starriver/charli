@@ -244,20 +244,33 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 		}
 
 		if len(opt.Choices) != 0 {
-			fmt.Fprintf(w, " -f -a %s", quote(strings.Join(opt.Choices, " ")))
+			fmt.Fprintf(w, " -x -a %s", quote(strings.Join(opt.Choices, " ")))
 		}
 	}
 
 	if app.hasHelpCommand() {
 		describeCmd(&fakeHelpCmd)
+
+		if len(app.Commands) != 1 {
+			cmdNames := strings.Builder{}
+			for _, cmd := range app.Commands {
+				cmdNames.WriteString(cmd.Name)
+				cmdNames.WriteString(" ")
+			}
+			s := cmdNames.String()
+			s = s[:len(s)-1]
+			fmt.Fprintf(w,
+				"%s -n '__fish_cmdname_using_subcommand help' -x -a %s -d 'Command'\n",
+				prefix,
+				quote(s),
+			)
+		}
 	}
 
-	var withHelpOption []Option
 	if app.hasHelpFlags() {
 		fmt.Fprint(w, prefix)
 		describeOpt(&fakeHelpOption)
 		fmt.Fprint(w, "\n")
-		withHelpOption = []Option{fakeHelpOption}
 	}
 
 	if len(app.Commands) == 1 {
@@ -277,26 +290,12 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 			fmt.Sprintf("__fish_cmdname_using_subcommand %s", cmd.Name),
 		))
 
-		opts := withHelpOption
-		opts = append(opts, app.GlobalOptions...)
-		opts = append(opts, cmd.Options...)
+		opts := append(app.GlobalOptions, cmd.Options...)
 
 		for _, opt := range opts {
 			fmt.Fprint(w, prefix, optPrefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")
-		}
-
-		if cmd.Name == app.DefaultCommand {
-			// Same again without optPrefix or help.
-			if app.hasHelpFlags() {
-				opts = opts[1:]
-			}
-			for _, opt := range opts {
-				fmt.Fprint(w, prefix)
-				describeOpt(&opt)
-				fmt.Fprint(w, "\n")
-			}
 		}
 	}
 }
