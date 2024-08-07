@@ -1,6 +1,8 @@
 package charli
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 )
 
@@ -151,3 +153,24 @@ const (
 	HelpFlag HelpAccess = 1 << iota
 	HelpCommand
 )
+
+func (app *App) hasHelpFlags() bool {
+	return app.HelpAccess == 0 || app.HelpAccess&HelpFlag != 0
+}
+
+func (app *App) hasHelpCommand() bool {
+	return app.HelpAccess&HelpCommand != 0
+}
+
+func (app *App) cmdMap() (m map[string]*Command) {
+	m = make(map[string]*Command, len(app.Commands))
+	for _, cmd := range app.Commands {
+		if _, ok := m[cmd.Name]; ok {
+			panic(
+				fmt.Sprintf("Duplicate command '%s' configured", cmd.Name),
+			)
+		}
+		m[cmd.Name] = &cmd
+	}
+	return
+}

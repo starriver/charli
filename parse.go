@@ -25,15 +25,7 @@ func (app *App) Parse(argv []string) (r Result) {
 		}
 		r.Command = &app.Commands[0]
 	} else {
-		cmdMap = make(map[string]*Command, len(app.Commands))
-		for _, cmd := range app.Commands {
-			if _, ok := cmdMap[cmd.Name]; ok {
-				panic(
-					fmt.Sprintf("Duplicate command '%s' configured", cmd.Name),
-				)
-			}
-			cmdMap[cmd.Name] = &cmd
-		}
+		cmdMap = app.cmdMap()
 	}
 
 	ha := app.HelpAccess
