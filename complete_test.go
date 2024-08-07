@@ -6,57 +6,63 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestComplete(t *testing.T) {
-	app := App{
-		Commands: []Command{
-			{
-				Name: "cmd1",
-				Options: []Option{
-					{
-						Short: 'f',
-						Flag:  true,
-					},
-					{
-						Long: "value",
-					},
-					{
-						Short:   'c',
-						Long:    "choice",
-						Choices: []string{"aa", "bb"},
-					},
+var app = App{
+	Commands: []Command{
+		{
+			Name:     "cmd1",
+			Headline: "Headline1",
+			Options: []Option{
+				{
+					Short:    'f',
+					Flag:     true,
+					Headline: "Flag",
+				},
+				{
+					Long: "value",
+				},
+				{
+					Short:   'c',
+					Long:    "choice",
+					Choices: []string{"aa", "bb"},
 				},
 			},
-			{
-				Name: "cmd2",
-			},
 		},
-		GlobalOptions: []Option{
-			{
-				Short: 'o',
-				Flag:  true,
-			},
+		{
+			Name: "cmd2",
 		},
-	}
+	},
+	GlobalOptions: []Option{
+		{
+			Short: 'o',
+			Flag:  true,
+		},
+	},
+}
 
-	appWithDefault := app
+var appWithDefault = app
+var appSingleCmd = app
+var appHelpCmd = app
+var appSingleCmdWithHelp = app
+var appHelpBoth = app
+
+func init() {
 	appWithDefault.DefaultCommand = "cmd1"
 
-	appSingleCmd := app
-	appSingleCmd.Commands = appSingleCmd.Commands[:1]
+	appSingleCmd.Commands = app.Commands[:1]
 	appSingleCmd.GlobalOptions = []Option{}
 
-	appHelpCmd := app
 	appHelpCmd.HelpAccess = HelpCommand
 
-	appSingleCmdWithHelp := appSingleCmd
+	appSingleCmdWithHelp = appSingleCmd
 	appSingleCmdWithHelp.HelpAccess = HelpCommand
 
-	appHelpBoth := app
 	appHelpBoth.HelpAccess = HelpFlag | HelpCommand
+}
 
+func TestComplete(t *testing.T) {
 	tests := []struct {
 		app       App
 		argv      []string
@@ -199,7 +205,7 @@ func TestComplete(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		t.Run(fmt.Sprintf("Complete %d %v", i, test.argv), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d %v", i, test.argv), func(t *testing.T) {
 			defer func() {
 				r := recover()
 				if test.wantPanic {
@@ -213,36 +219,88 @@ func TestComplete(t *testing.T) {
 
 			var buf bytes.Buffer
 			test.app.Complete(&buf, test.i, test.argv)
-			got := strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n")
-			if len(got) == 1 && got[0] == "" {
-				got = []string{}
-			}
+			got := strings.TrimSpace(buf.String())
+			want := strings.Join(test.want, "\n")
 
-			if diff := deep.Equal(got, test.want); diff != nil {
-				t.Error(diff)
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(got, want, false)
+
+			t.Log(dmp.DiffPrettyText(diffs))
+			for _, diff := range diffs {
+				if diff.Type != diffmatchpatch.DiffEqual {
+					t.Fail()
+				}
 			}
 		})
 	}
 }
 
-var wantBashCompletion = `_complete_aa() {
-	for c in $('a+a\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
+var wantBashCompletion = `_complete_aa_-A0() {
+	for c in $('a+a_-A0\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
 		COMPREPLY+=("$c")
 	done
 }
-complete -o bashdefault -F _complete_aa 'a+a\''
+complete -o bashdefault -F _complete_aa_-A0 'a+a_-A0\''
 `
 
 func TestGenerateBashCompletions(t *testing.T) {
 	// This function actually doesn't touch the App at all ftm - but it might
 	// in future. GenerateFishCompletions *does* touch the App. So for
 	// consistency, all of them have App as receiver.
-	app := App{}
+
 	var buf bytes.Buffer
-	app.GenerateBashCompletions(&buf, "a+a'", "_c")
+	// Use a really ugly name to test the identifiers + escaping.
+	app.GenerateBashCompletions(&buf, "a+a_-A0'", "_c")
 	got := buf.String()
 
-	if diff := deep.Equal(got, wantBashCompletion); diff != nil {
-		t.Error(diff)
+	dmp := diffmatchpatch.New()
+	diffs := dmp.DiffMain(got, wantBashCompletion, false)
+
+	t.Log(dmp.DiffPrettyText(diffs))
+	for _, diff := range diffs {
+		if diff.Type != diffmatchpatch.DiffEqual {
+			t.Fail()
+		}
 	}
+}
+
+var fishApp = `
+complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -f -a 'aa bb'
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
+`
+
+func TestGenerateFishCompletions(t *testing.T) {
+	tests := []struct {
+		app  App
+		want string
+	}{
+		{app, fishApp},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d %v", i, test), func(t *testing.T) {
+			var buf bytes.Buffer
+			app.GenerateFishCompletions(&buf, "a'")
+			got := buf.String()
+
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(got, test.want[1:], false)
+
+			t.Log(dmp.DiffPrettyText(diffs))
+			for _, diff := range diffs {
+				if diff.Type != diffmatchpatch.DiffEqual {
+					t.Fail()
+				}
+			}
+		})
+	}
+
 }

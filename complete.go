@@ -248,12 +248,15 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 		}
 	}
 
-	if (app.HelpAccess & HelpCommand) != 0 {
+	if app.hasHelpCommand() {
 		describeCmd(&fakeHelpCmd)
 	}
 
 	var withHelpOption []Option
-	if (app.HelpAccess & HelpFlag) != 0 {
+	if app.hasHelpFlags() {
+		fmt.Fprint(w, prefix)
+		describeOpt(&fakeHelpOption)
+		fmt.Fprint(w, "\n")
 		withHelpOption = []Option{fakeHelpOption}
 	}
 
@@ -274,7 +277,11 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 			fmt.Sprintf("__fish_cmdname_using_subcommand %s", cmd.Name),
 		))
 
-		for _, opt := range append(withHelpOption, cmd.Options...) {
+		opts := withHelpOption
+		opts = append(opts, app.GlobalOptions...)
+		opts = append(opts, cmd.Options...)
+
+		for _, opt := range opts {
 			fmt.Fprint(w, prefix, optPrefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")

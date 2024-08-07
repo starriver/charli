@@ -159,7 +159,7 @@ func (app *App) hasHelpFlags() bool {
 }
 
 func (app *App) hasHelpCommand() bool {
-	return (app.HelpAccess & HelpCommand) != 0
+	return app.HelpAccess&HelpCommand != 0
 }
 
 func (app *App) cmdMap() (m map[string]*Command) {
