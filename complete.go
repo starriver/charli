@@ -8,14 +8,14 @@ import (
 )
 
 // Prints newline-separated completions. i should be the index of the arg being
-// completed in argv (as requested by the shell) - note that this number should
-// be 1 less than the index of the arg being completed, because of the special
-// trigger flag.
+// completed in argv.
 func (app *App) Complete(w io.Writer, i int, argv []string) {
-	if len(argv) < 3 {
+	if len(argv) < 2 {
 		panic("argv appears truncated")
 	}
-	args := argv[2:]
+
+	// Add an empty string to the end for if we're completing from nothing.
+	args := append(argv[2:], "")
 	nargs := len(args)
 	i -= 2
 
@@ -53,7 +53,7 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 		helpFirst = true
 	}
 
-	// Can we complete a command (or -h/--help)?
+	// Can we complete a command (or -h/--help/help)?
 	if i == 0 || (helpFirst && i == 1) {
 		if !singleCmd {
 			for _, cmd := range app.Commands {
@@ -63,17 +63,23 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 			}
 		}
 
+		singleOrDefault := singleCmd || app.DefaultCommand != ""
 		if i == 0 {
-			for _, f := range helpFlags {
-				if strings.HasPrefix(f, cur) {
-					fmt.Fprintln(w, f)
-				}
-			}
 			if app.hasHelpCommand() && strings.HasPrefix("help", cur) {
 				fmt.Fprintln(w, "help")
 			}
+			if !singleOrDefault {
+				for _, f := range helpFlags {
+					if strings.HasPrefix(f, cur) {
+						fmt.Fprintln(w, f)
+					}
+				}
+			}
 		}
-		return
+
+		if !singleOrDefault {
+			return
+		}
 	}
 
 	if singleCmd {
@@ -95,7 +101,7 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 		}
 	}
 
-	// Can we complete choices?
+	// Can we complete a non-flag (maybe with choices)?
 	if isOption(prev) && !strings.ContainsRune(prev, '=') {
 		var opt *Option
 		if isLongOption(prev) {
@@ -116,18 +122,24 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 			}
 		}
 
-		if opt != nil && len(opt.Choices) != 0 {
-			for _, c := range opt.Choices {
-				if strings.HasPrefix(c, args[i]) {
-					fmt.Fprintln(w, c)
+		if opt != nil {
+			if len(opt.Choices) != 0 {
+				for _, c := range opt.Choices {
+					if strings.HasPrefix(c, args[i]) {
+						fmt.Fprintln(w, c)
+					}
 				}
 			}
-			return
+
+			// If the option is expecting any value, don't complete further.
+			if !opt.Flag {
+				return
+			}
 		}
 	}
 
 	// Lastly, just complete options.
-	opts := cmd.Options
+	opts := append(app.GlobalOptions, cmd.Options...)
 	if app.hasHelpFlags() {
 		opts = append(opts, fakeHelpOption)
 	}
@@ -176,7 +188,7 @@ func (app *App) GenerateBashCompletions(w io.Writer, program, flag string) {
 	fmt.Fprintf(w, "%s() {\n", funcName)
 	fmt.Fprintf(
 		w,
-		"\tfor c in $(%s %s $COMP_CWORD $COMP_WORDS); do\n",
+		"\tfor c in $(%s %s (( $COMP_CWORD + 1 )) $COMP_WORDS); do\n",
 		program,
 		flag,
 	)
