@@ -224,3 +224,25 @@ func TestComplete(t *testing.T) {
 		})
 	}
 }
+
+var wantBashCompletion = `_complete_aa() {
+	for c in $('a+a\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
+		COMPREPLY+=("$c")
+	done
+}
+complete -o bashdefault -F _complete_aa 'a+a\''
+`
+
+func TestGenerateBashCompletions(t *testing.T) {
+	// This function actually doesn't touch the App at all ftm - but it might
+	// in future. GenerateFishCompletions *does* touch the App. So for
+	// consistency, all of them have App as receiver.
+	app := App{}
+	var buf bytes.Buffer
+	app.GenerateBashCompletions(&buf, "a+a'", "_c")
+	got := buf.String()
+
+	if diff := deep.Equal(got, wantBashCompletion); diff != nil {
+		t.Error(diff)
+	}
+}
