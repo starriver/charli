@@ -261,7 +261,7 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 	}
 
 	if len(app.Commands) == 1 {
-		for _, opt := range append(withHelpOption, app.Commands[0].Options...) {
+		for _, opt := range append(app.GlobalOptions, app.Commands[0].Options...) {
 			fmt.Fprint(w, prefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")
@@ -285,6 +285,18 @@ func (app *App) GenerateFishCompletions(w io.Writer, program string) {
 			fmt.Fprint(w, prefix, optPrefix)
 			describeOpt(&opt)
 			fmt.Fprint(w, "\n")
+		}
+
+		if cmd.Name == app.DefaultCommand {
+			// Same again without optPrefix or help.
+			if app.hasHelpFlags() {
+				opts = opts[1:]
+			}
+			for _, opt := range opts {
+				fmt.Fprint(w, prefix)
+				describeOpt(&opt)
+				fmt.Fprint(w, "\n")
+			}
 		}
 	}
 }

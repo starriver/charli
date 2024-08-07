@@ -277,18 +277,58 @@ complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'h' -l 'help' 
 complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
 `
 
+var fishAppWithDefault = `
+complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -f -a 'aa bb'
+complete -c 'a\'' -k -s 'o' -f
+complete -c 'a\'' -k -s 'f' -d 'Flag' -f
+complete -c 'a\'' -k -l 'value' -r
+complete -c 'a\'' -k -s 'c' -l 'choice' -r -f -a 'aa bb'
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
+`
+
+var fishAppSingleCmd = `
+complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
+complete -c 'a\'' -k -s 'f' -d 'Flag' -f
+complete -c 'a\'' -k -l 'value' -r
+complete -c 'a\'' -k -s 'c' -l 'choice' -r -f -a 'aa bb'
+`
+
+var fishAppHelpCmd = `
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -f -a 'aa bb'
+complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
+complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
+`
+
+// TODO: need to add 'help cmd1' and 'help cmd2'
+
 func TestGenerateFishCompletions(t *testing.T) {
 	tests := []struct {
 		app  App
 		want string
 	}{
 		{app, fishApp},
+		{appWithDefault, fishAppWithDefault},
+		{appSingleCmd, fishAppSingleCmd},
+		{appHelpCmd, fishAppHelpCmd},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d %v", i, test), func(t *testing.T) {
 			var buf bytes.Buffer
-			app.GenerateFishCompletions(&buf, "a'")
+			test.app.GenerateFishCompletions(&buf, "a'")
 			got := buf.String()
 
 			dmp := diffmatchpatch.New()
