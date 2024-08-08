@@ -10,17 +10,20 @@ import (
 const description = `
 This example demos {charli}'s completions and script generation.
 
-To install the completions, use
+To install the completions for bash and fish, run the {install} command.
 `
 
 var app = cli.App{
 	Description: description,
-	Commands:    []cli.Command{},
+	Commands: []cli.Command{
+		install,
+		whatever,
+	},
 }
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--_complete" {
-		app.Complete(w io.Writer, i int, argv []string)
+		app.Complete(os.Stdout, os.Args)
 		return
 	}
 
@@ -29,19 +32,13 @@ func main() {
 	ok := false
 	switch r.Action {
 	case cli.Proceed:
-		// r.RunCommand() is exactly equivalent to r.Command.Run(&r). The
-		// command's Run(...) func should provide further validation, then
-		// (if everything passed) actually do the work.
 		ok = r.RunCommand()
 
 	case cli.HelpOK:
-		// User asked for help explicitly. This isn't an error.
 		r.PrintHelp()
 		ok = true
 
 	case cli.HelpError:
-		// User didn't ask for help (or asked wonkily) - but display it anyway.
-		// Note that r.PrintHelp() is exactly equivalent to this line:
 		app.Help(os.Stderr, os.Args[0], r.Command)
 
 	case cli.Fatal:
