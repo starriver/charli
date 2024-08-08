@@ -1,4 +1,4 @@
-package charli
+package charli_test
 
 import (
 	"bytes"
@@ -7,15 +7,16 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	cli "github.com/starriver/charli"
 )
 
 // TODO: test color output.
 
 // No default command, 2 subcommands
-var testHelpApp1 = App{
+var testHelpApp1 = cli.App{
 	Headline:    "Headline",
 	Description: "\nDescription\n",
-	Commands: []Command{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
@@ -42,10 +43,10 @@ Commands:
 `
 
 // Default command, no description, 2 subcommands
-var testHelpApp2 = App{
+var testHelpApp2 = cli.App{
 	Headline:       "Headline",
 	DefaultCommand: "cmd1",
-	Commands: []Command{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
@@ -70,13 +71,13 @@ Commands:
 `
 
 // No app headline, command help with headline, description, flags
-var testHelpApp3 = App{
-	Commands: []Command{
+var testHelpApp3 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name:        "cmd1",
 			Headline:    "Headline",
 			Description: "\nThis is a {description}\n",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Short:    'a',
 					Headline: "A headline",
@@ -115,11 +116,11 @@ Options:
 `
 
 // Args only
-var testHelpApp4 = App{
-	Commands: []Command{
+var testHelpApp4 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
-			Args: Args{
+			Args: cli.Args{
 				Count:    3,
 				Metavars: []string{"A", "B", "C"},
 			},
@@ -138,11 +139,11 @@ Options:
 `
 
 // Args only, default metavars
-var testHelpApp5 = App{
-	Commands: []Command{
+var testHelpApp5 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
-			Args: Args{
+			Args: cli.Args{
 				Count:    3,
 				Metavars: []string{"A"},
 			},
@@ -161,11 +162,11 @@ Options:
 `
 
 // Args only, some required but varadic
-var testHelpApp6 = App{
-	Commands: []Command{
+var testHelpApp6 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
-			Args: Args{
+			Args: cli.Args{
 				Count:    2,
 				Varadic:  true,
 				Metavars: []string{"A", "B", "C"},
@@ -185,11 +186,11 @@ Options:
 `
 
 // Args only, all varadic
-var testHelpApp7 = App{
-	Commands: []Command{
+var testHelpApp7 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
-			Args: Args{
+			Args: cli.Args{
 				Count:    0,
 				Varadic:  true,
 				Metavars: []string{"A", "B", "C"},
@@ -209,11 +210,11 @@ Options:
 `
 
 // With global options
-var testHelpApp8 = App{
-	Commands: []Command{
+var testHelpApp8 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Short:    'b',
 					Flag:     true,
@@ -225,7 +226,7 @@ var testHelpApp8 = App{
 			Name: "cmd2",
 		},
 	},
-	GlobalOptions: []Option{
+	GlobalOptions: []cli.Option{
 		{
 			Short:    'a',
 			Flag:     true,
@@ -244,8 +245,8 @@ Options:
 `
 
 // Command help with default command
-var testHelpApp9 = App{
-	Commands: []Command{
+var testHelpApp9 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name: "cmd1",
 		},
@@ -264,8 +265,8 @@ Options:
 `
 
 // Command help when only command
-var testHelpApp10 = App{
-	Commands: []Command{
+var testHelpApp10 = cli.App{
+	Commands: []cli.Command{
 		{},
 	},
 }
@@ -278,9 +279,9 @@ Options:
 `
 
 // Help as command
-var testHelpApp11 = App{
+var testHelpApp11 = cli.App{
 	Description: "\nDescription\n", // This is here to test spacing
-	Commands: []Command{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
@@ -290,7 +291,7 @@ var testHelpApp11 = App{
 			Headline: "Headline2",
 		},
 	},
-	HelpAccess: HelpCommand,
+	HelpAccess: cli.HelpCommand,
 }
 
 const testHelpOutput11 = `
@@ -305,9 +306,9 @@ Commands:
 `
 
 // Help as flag & command
-var testHelpApp12 = App{
+var testHelpApp12 = cli.App{
 	Description: "\nDescription\n", // This is here to test spacing
-	Commands: []Command{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
@@ -317,7 +318,7 @@ var testHelpApp12 = App{
 			Headline: "Headline2",
 		},
 	},
-	HelpAccess: HelpFlag | HelpCommand,
+	HelpAccess: cli.HelpFlag | cli.HelpCommand,
 }
 
 const testHelpOutput12 = `
@@ -335,8 +336,8 @@ Commands:
 `
 
 // Command help, help as command, and no command options
-var testHelpApp13 = App{
-	Commands: []Command{
+var testHelpApp13 = cli.App{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
@@ -346,7 +347,7 @@ var testHelpApp13 = App{
 			Headline: "Headline2",
 		},
 	},
-	HelpAccess: HelpCommand,
+	HelpAccess: cli.HelpCommand,
 }
 
 const testHelpOutput13 = `
@@ -356,7 +357,7 @@ Usage: program cmd1
 `
 
 var testHelpCases = []struct {
-	app    *App
+	app    *cli.App
 	cmd    bool
 	output string
 }{
@@ -428,7 +429,7 @@ func TestHelp(t *testing.T) {
 
 	for i, test := range testHelpCases {
 		t.Run(fmt.Sprintf("Test %d, app: %v, cmd: %v", i, test.app, test.cmd), func(t *testing.T) {
-			var cmd *Command
+			var cmd *cli.Command
 			if test.cmd {
 				cmd = &test.app.Commands[0]
 			}

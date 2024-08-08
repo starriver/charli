@@ -1,27 +1,28 @@
-package charli
+package charli_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/go-test/deep"
+	cli "github.com/starriver/charli"
 )
 
-var testParseTemplate = App{
-	GlobalOptions: []Option{
+var testParseTemplate = cli.App{
+	GlobalOptions: []cli.Option{
 		{
 			Short: 'g',
 			Flag:  true,
 		},
 	},
 
-	Commands: []Command{
+	Commands: []cli.Command{
 		{
 			Name: "zero",
 		},
 		{
 			Name: "options",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Long: "long",
 				},
@@ -39,7 +40,7 @@ var testParseTemplate = App{
 		},
 		{
 			Name: "combined",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Short: 'a',
 					Flag:  true,
@@ -56,20 +57,20 @@ var testParseTemplate = App{
 		},
 		{
 			Name: "args3",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Long: "opt",
 					Flag: true,
 				},
 			},
-			Args: Args{
+			Args: cli.Args{
 				Count:    3,
 				Metavars: []string{"A", "B", "C"},
 			},
 		},
 		{
 			Name: "args3v",
-			Args: Args{
+			Args: cli.Args{
 				Count:    3,
 				Varadic:  true,
 				Metavars: []string{"A", "B", "C", "D"},
@@ -77,7 +78,7 @@ var testParseTemplate = App{
 		},
 		{
 			Name: "args0v",
-			Args: Args{
+			Args: cli.Args{
 				Count:    0,
 				Varadic:  true,
 				Metavars: []string{"A"},
@@ -86,10 +87,10 @@ var testParseTemplate = App{
 	},
 }
 
-var testParseTemplateSingle = App{
-	Commands: []Command{
+var testParseTemplateSingle = cli.App{
+	Commands: []cli.Command{
 		{
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Short: 'f',
 					Long:  "flag",
@@ -104,51 +105,51 @@ var testParseCases = []struct {
 	input      []string
 	setDefault string
 	useSingle  bool
-	helpAccess HelpAccess
-	output     Result
+	helpAccess cli.HelpAccess
+	output     cli.Result
 	cmdName    string
 	errCount   int
 }{
 	{
 		input: []string{},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 	},
 	{
 		input: []string{"-h"},
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 	},
 	{
 		// Invalid command
 		input: []string{"nope"},
-		output: Result{
-			Action: Fatal,
+		output: cli.Result{
+			Action: cli.Fatal,
 		},
 		errCount: 1,
 	},
 	{
 		// Invalid command
 		input: []string{"nope", "-h"},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		errCount: 1,
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"-h", "-a"},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 	},
 	{
 		input: []string{"zero"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 		},
@@ -156,55 +157,55 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"-h", "zero"},
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "zero",
 	},
 	{
 		input: []string{"zero", "-h"},
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "zero",
 	},
 	{
 		input: []string{"zero", "--help"},
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "zero",
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"-h", "zero", "-b"},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		cmdName: "zero",
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"zero", "-h", "-b"},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		cmdName: "zero",
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"zero", "-b", "-h"},
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		cmdName: "zero",
 	},
 	{
 		input:      []string{},
 		setDefault: "zero",
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 		},
@@ -213,9 +214,9 @@ var testParseCases = []struct {
 	{
 		// Test the global opt
 		input: []string{"zero", "-g"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {IsSet: true},
 			},
 		},
@@ -224,74 +225,74 @@ var testParseCases = []struct {
 	{
 		input:      []string{"-h"},
 		setDefault: "zero",
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 	},
 	{
 		input: []string{"help"},
-		output: Result{
-			Action: Fatal,
+		output: cli.Result{
+			Action: cli.Fatal,
 		},
 		errCount: 1,
 	},
 	{
 		input:      []string{"help"},
-		helpAccess: HelpCommand,
-		output: Result{
-			Action: HelpOK,
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 	},
 	{
 		input:      []string{"help", "help"},
-		helpAccess: HelpCommand,
-		output: Result{
-			Action: HelpError,
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 	},
 	{
 		input:      []string{"help", "zero"},
-		helpAccess: HelpCommand,
-		output: Result{
-			Action: HelpOK,
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "zero",
 	},
 	{
 		input:      []string{"zero", "help"},
-		helpAccess: HelpCommand,
-		output: Result{
-			Action: HelpOK,
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "zero",
 	},
 	{
 		input:      []string{"help", "-h"},
-		helpAccess: HelpFlag | HelpCommand,
-		output: Result{
-			Action: HelpError,
+		helpAccess: cli.HelpFlag | cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 	},
 	{
 		input:      []string{"-h", "help"},
-		helpAccess: HelpFlag | HelpCommand,
-		output: Result{
-			Action: HelpError,
+		helpAccess: cli.HelpFlag | cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 	},
 	{
 		input:      []string{"help", "zero", "-a"},
-		helpAccess: HelpCommand,
-		output: Result{
-			Action: HelpError,
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		cmdName: "zero",
 	},
 	{
 		input: []string{"options"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {},
 				"c":      {},
 				"choice": {},
@@ -304,9 +305,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"options", "--long", "ok", "--choice=a", "-f"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {Value: "ok", IsSet: true},
 				"c":      {Value: "a", IsSet: true},
 				"choice": {Value: "a", IsSet: true},
@@ -319,9 +320,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"options", "-c", "a"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {},
 				"c":      {Value: "a", IsSet: true},
 				"choice": {Value: "a", IsSet: true},
@@ -335,9 +336,9 @@ var testParseCases = []struct {
 	{
 		// Nothing supplied for --long
 		input: []string{"options", "--long", "--choice=a", "-f"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {},
 				"c":      {},
 				"choice": {},
@@ -352,9 +353,9 @@ var testParseCases = []struct {
 	{
 		// Nothing supplied for --long (at end)
 		input: []string{"options", "--long"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {},
 				"c":      {},
 				"choice": {},
@@ -369,9 +370,9 @@ var testParseCases = []struct {
 	{
 		// -c=a is invalid, d is invalid choice, - isn't an option
 		input: []string{"options", "-c=a", "--choice", "d", "-"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"long":   {},
 				"c":      {},
 				"choice": {},
@@ -385,9 +386,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"combined", "-ab"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
@@ -398,9 +399,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"combined", "-ab", "-c"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {IsSet: true},
@@ -412,9 +413,9 @@ var testParseCases = []struct {
 	{
 		// -x isn't an option
 		input: []string{"combined", "-abx"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
@@ -426,9 +427,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3", "a", "b", "c"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {},
 				"g":   {},
 			},
@@ -439,9 +440,9 @@ var testParseCases = []struct {
 	{
 		// Too many args
 		input: []string{"args3", "a", "b", "c", "d"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {},
 				"g":   {},
 			},
@@ -453,9 +454,9 @@ var testParseCases = []struct {
 	{
 		// Too few args
 		input: []string{"args3", "a"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {},
 				"g":   {},
 			},
@@ -466,9 +467,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3", "a", "--opt", "b", "c"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {IsSet: true},
 				"g":   {},
 			},
@@ -478,9 +479,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3", "a", "b", "--", "--opt"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {},
 				"g":   {},
 			},
@@ -490,9 +491,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3", "a", "b"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"opt": {},
 				"g":   {},
 			},
@@ -503,9 +504,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3v", "a", "b", "c", "d"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 			Args: []string{"a", "b", "c", "d"},
@@ -514,9 +515,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args3v", "a", "b"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 			Args: []string{"a", "b"},
@@ -526,9 +527,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args0v"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 		},
@@ -536,9 +537,9 @@ var testParseCases = []struct {
 	},
 	{
 		input: []string{"args0v", "a", "b"},
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"g": {},
 			},
 			Args: []string{"a", "b"},
@@ -548,10 +549,10 @@ var testParseCases = []struct {
 	{
 		input:     []string{},
 		useSingle: true,
-		output: Result{
-			Action: Proceed,
+		output: cli.Result{
+			Action: cli.Proceed,
 
-			Options: map[string]*OptionResult{
+			Options: map[string]*cli.OptionResult{
 				"f":    {},
 				"flag": {},
 			},
@@ -561,9 +562,9 @@ var testParseCases = []struct {
 	{
 		input:     []string{"-f"},
 		useSingle: true,
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"f":    {IsSet: true},
 				"flag": {IsSet: true},
 			},
@@ -573,17 +574,17 @@ var testParseCases = []struct {
 	{
 		input:     []string{"-h"},
 		useSingle: true,
-		output: Result{
-			Action: HelpOK,
+		output: cli.Result{
+			Action: cli.HelpOK,
 		},
 		cmdName: "only",
 	},
 	{
 		input:     []string{"only"},
 		useSingle: true,
-		output: Result{
-			Action: Proceed,
-			Options: map[string]*OptionResult{
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
 				"f":    {},
 				"flag": {},
 			},
@@ -594,8 +595,8 @@ var testParseCases = []struct {
 	{
 		input:     []string{"-h", "only"},
 		useSingle: true,
-		output: Result{
-			Action: HelpError,
+		output: cli.Result{
+			Action: cli.HelpError,
 		},
 		cmdName: "only",
 	},
@@ -639,14 +640,14 @@ func TestParse(t *testing.T) {
 
 			// We don't care about testing whether these maps are initialised.
 			if got.Options == nil {
-				got.Options = make(map[string]*OptionResult)
+				got.Options = make(map[string]*cli.OptionResult)
 			}
 			if want.Options == nil {
-				want.Options = make(map[string]*OptionResult)
+				want.Options = make(map[string]*cli.OptionResult)
 			}
 
-			// Expect an empty (not nil) slice where Action == Proceed.
-			if (want.Action == Proceed) && want.Args == nil {
+			// Expect an empty (not nil) slice where Action == cli.Proceed.
+			if (want.Action == cli.Proceed) && want.Args == nil {
 				want.Args = []string{}
 			}
 
@@ -676,8 +677,8 @@ func TestParse(t *testing.T) {
 
 // Special cases that panic
 func TestParsePanic(t *testing.T) {
-	dupeCmd := App{
-		Commands: []Command{
+	dupeCmd := cli.App{
+		Commands: []cli.Command{
 			{
 				Name: "cmd",
 			},
@@ -687,25 +688,25 @@ func TestParsePanic(t *testing.T) {
 		},
 	}
 
-	dupeOption := App{
-		Commands: []Command{
+	dupeOption := cli.App{
+		Commands: []cli.Command{
 			{
-				Options: []Option{
+				Options: []cli.Option{
 					{
 						Short: 'a',
 					},
 				},
 			},
 		},
-		GlobalOptions: []Option{
+		GlobalOptions: []cli.Option{
 			{
 				Short: 'a',
 			},
 		},
 	}
 
-	invalidDefaultCmd := App{
-		Commands: []Command{
+	invalidDefaultCmd := cli.App{
+		Commands: []cli.Command{
 			{
 				Name: "cmd1",
 			},
@@ -716,8 +717,8 @@ func TestParsePanic(t *testing.T) {
 		DefaultCommand: "cmd3",
 	}
 
-	defaultWithSingleCmd := App{
-		Commands: []Command{
+	defaultWithSingleCmd := cli.App{
+		Commands: []cli.Command{
 			{
 				Name: "cmd1",
 			},
@@ -755,8 +756,8 @@ func TestParsePanic(t *testing.T) {
 // Special case: ErrorHandler provided
 func TestErrorHandler(t *testing.T) {
 	errs := 0
-	app := App{
-		Commands: []Command{
+	app := cli.App{
+		Commands: []cli.Command{
 			{},
 		},
 		ErrorHandler: func(str string) {

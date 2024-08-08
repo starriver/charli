@@ -1,4 +1,4 @@
-package charli
+package charli_test
 
 import (
 	"bytes"
@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
+	cli "github.com/starriver/charli"
 )
 
-var app = App{
-	Commands: []Command{
+var app = cli.App{
+	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
 			Headline: "Headline1",
-			Options: []Option{
+			Options: []cli.Option{
 				{
 					Short:    'f',
 					Flag:     true,
@@ -34,7 +35,7 @@ var app = App{
 			Name: "cmd2",
 		},
 	},
-	GlobalOptions: []Option{
+	GlobalOptions: []cli.Option{
 		{
 			Short: 'o',
 			Flag:  true,
@@ -52,19 +53,19 @@ func init() {
 	appWithDefault.DefaultCommand = "cmd1"
 
 	appSingleCmd.Commands = app.Commands[:1]
-	appSingleCmd.GlobalOptions = []Option{}
+	appSingleCmd.GlobalOptions = []cli.Option{}
 
-	appHelpCmd.HelpAccess = HelpCommand
+	appHelpCmd.HelpAccess = cli.HelpCommand
 
 	appSingleCmdWithHelp = appSingleCmd
-	appSingleCmdWithHelp.HelpAccess = HelpCommand
+	appSingleCmdWithHelp.HelpAccess = cli.HelpCommand
 
-	appHelpBoth.HelpAccess = HelpFlag | HelpCommand
+	appHelpBoth.HelpAccess = cli.HelpFlag | cli.HelpCommand
 }
 
 func TestComplete(t *testing.T) {
 	tests := []struct {
-		app       App
+		app       cli.App
 		argv      []string
 		i         int
 		want      []string
@@ -258,11 +259,11 @@ func TestCompletionScripts(t *testing.T) {
 	flag := "--_complete"
 
 	var buf bytes.Buffer
-	GenerateBashCompletions(&buf, program, flag)
+	cli.GenerateBashCompletions(&buf, program, flag)
 	gotBash := buf.String()
 
 	buf = bytes.Buffer{}
-	GenerateFishCompletions(&buf, program, flag)
+	cli.GenerateFishCompletions(&buf, program, flag)
 	gotFish := buf.String()
 
 	tests := []struct {
