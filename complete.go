@@ -43,6 +43,19 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 
 	singleCmd := len(app.Commands) == 1
 
+	completeFor := func(word, headline, headlineDefault string) {
+		if !strings.HasPrefix(word, cur) {
+			return
+		}
+		fmt.Fprintf(w, "%s\t", word)
+		if headline != "" {
+			fmt.Fprint(w, headline)
+		} else {
+			fmt.Fprint(w, headlineDefault)
+		}
+		fmt.Fprintln(w)
+	}
+
 	var cmd *Command
 	helpFirst := false
 
@@ -57,22 +70,18 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 	if i == 0 || (helpFirst && i == 1) {
 		if !singleCmd {
 			for _, cmd := range app.Commands {
-				if strings.HasPrefix(cmd.Name, cur) {
-					fmt.Fprintln(w, cmd.Name)
-				}
+				completeFor(cmd.Name, cmd.Headline, "Command")
 			}
 		}
 
 		singleOrDefault := singleCmd || app.DefaultCommand != ""
 		if i == 0 {
-			if app.hasHelpCommand() && strings.HasPrefix("help", cur) {
-				fmt.Fprintln(w, "help")
+			if app.hasHelpCommand() {
+				completeFor("help", "Show help", "")
 			}
 			if !singleOrDefault {
 				for _, f := range helpFlags {
-					if strings.HasPrefix(f, cur) {
-						fmt.Fprintln(w, f)
-					}
+					completeFor(f, "Show help", "")
 				}
 			}
 		}
@@ -125,9 +134,11 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 		if opt != nil {
 			if len(opt.Choices) != 0 {
 				for _, c := range opt.Choices {
-					if strings.HasPrefix(c, args[i]) {
-						fmt.Fprintln(w, c)
+					metavar := "ARG"
+					if opt.Metavar != "" {
+						metavar = opt.Metavar
 					}
+					completeFor(c, fmt.Sprintf("%s %s", prev, metavar), "")
 				}
 			}
 
@@ -141,20 +152,24 @@ func (app *App) Complete(w io.Writer, i int, argv []string) {
 	// Lastly, just complete options.
 	opts := append(app.GlobalOptions, cmd.Options...)
 	if app.hasHelpFlags() {
-		opts = append(opts, fakeHelpOption)
+		helpOpt := fakeHelpOption
+		helpOpt.Headline = "Show help"
+		opts = append(opts, helpOpt)
 	}
 	for _, opt := range opts {
+		defaultHeadline := "Option"
+		if opt.Flag {
+			defaultHeadline = "Flag"
+		}
+
 		if opt.Short != 0 {
 			short := "-" + string(opt.Short)
-			if strings.HasPrefix(short, cur) {
-				fmt.Fprintln(w, short)
-			}
+			completeFor(short, opt.Headline, defaultHeadline)
 		}
+
 		if opt.Long != "" {
 			long := "--" + opt.Long
-			if strings.HasPrefix(long, cur) {
-				fmt.Fprintln(w, long)
-			}
+			completeFor(long, opt.Headline, defaultHeadline)
 		}
 	}
 }
