@@ -183,6 +183,7 @@ func shellID(program string) string {
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
 // If in doubt, use "--_complete".
 func GenerateBashCompletions(w io.Writer, program, flag string) {
+	qprogram := quote(program)
 	funcName := fmt.Sprintf("_complete_charli_%s", shellID(program))
 
 	// Write a function that calls the program with the required completion
@@ -190,11 +191,11 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 	fmt.Fprintf(w, "%s() {\n", funcName)
 	fmt.Fprintf(
 		w,
-		"\tfor c in $(%s %s (( $COMP_CWORD + 1 )) $COMP_WORDS); do\n",
-		program,
+		"\tfor c in $(%s %s ${COMP_WORDS[@]:1:$COMP_CWORD}); do\n",
+		qprogram,
 		flag,
 	)
-	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"$c\")")
+	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"${c%%\t*}\")")
 	fmt.Fprintln(w, "\tdone")
 	fmt.Fprintln(w, "}")
 
@@ -203,7 +204,7 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 		w,
 		"complete -o bashdefault -F %s %s\n",
 		funcName,
-		quote(program),
+		qprogram,
 	)
 }
 
@@ -217,12 +218,12 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
 // If in doubt, use "--_complete".
 func GenerateFishCompletions(w io.Writer, program, flag string) {
-	funcName := fmt.Sprintf("__fish_complete_%s", shellID(program))
+	qprogram := quote(program)
+	funcName := fmt.Sprintf("__complete_charli_%s", shellID(program))
 
 	fmt.Fprintf(w, "function %s\n", funcName)
-	fmt.Fprintln(w, "\tset -l tokens (commandline -op)")
-	fmt.Fprintln(w, "\tset -l index (contains -i -- -- (commandline -opc)")
-	fmt.Fprintln(w, "\t%s %s $index $tokens[1..-1]", quote(program), flag)
+	fmt.Fprintln(w, "\tset -l tokens (commandline -cop)")
+	fmt.Fprintf(w, "\t%s %s $tokens[1..-1]\n", qprogram, flag)
 	fmt.Fprintln(w, "end")
-	fmt.Fprintf(w, "complete -c %s -a \"(%s)\"\n", program, funcName)
+	fmt.Fprintf(w, "complete -c %s -a \"(%s)\"\n", qprogram, funcName)
 }

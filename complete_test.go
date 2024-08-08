@@ -235,58 +235,49 @@ func TestComplete(t *testing.T) {
 	}
 }
 
-var wantBashCompletion = `_complete_a_a_-A0_() {
-	for c in $('a+a_-A0\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
-		COMPREPLY+=("$c")
+var wantBash = `
+_complete_charli_a_a_-A0_() {
+	for c in $('a+a_-A0\'' --_complete ${COMP_WORDS[@]:1:$COMP_CWORD}); do
+		COMPREPLY+=("${c%%	*}")
 	done
 }
-complete -o bashdefault -F __complete_a_a_-A0 'a+a_-A0\''
+complete -o bashdefault -F _complete_charli_a_a_-A0_ 'a+a_-A0\''
 `
 
-func TestGenerateBashCompletions(t *testing.T) {
-	// This function actually doesn't touch the App at all ftm - but it might
-	// in future. GenerateFishCompletions *does* touch the App. So for
-	// consistency, all of them have App as receiver.
+var wantFish = `
+function __complete_charli_a_a_-A0_
+	set -l tokens (commandline -cop)
+	'a+a_-A0\'' --_complete $tokens[1..-1]
+end
+complete -c 'a+a_-A0\'' -a "(__complete_charli_a_a_-A0_)"
+`
+
+func TestCompletionScripts(t *testing.T) {
+	// Use a really ugly name to test the identifiers + escaping.
+	program := "a+a_-A0'"
+	flag := "--_complete"
 
 	var buf bytes.Buffer
-	// Use a really ugly name to test the identifiers + escaping.
-	GenerateBashCompletions(&buf, "a+a_-A0'", "_c")
-	got := buf.String()
+	GenerateBashCompletions(&buf, program, flag)
+	gotBash := buf.String()
 
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(got, wantBashCompletion, false)
+	buf = bytes.Buffer{}
+	GenerateFishCompletions(&buf, program, flag)
+	gotFish := buf.String()
 
-	t.Log(dmp.DiffPrettyText(diffs))
-	for _, diff := range diffs {
-		if diff.Type != diffmatchpatch.DiffEqual {
-			t.Fail()
-		}
-	}
-}
-
-// TODO
-
-func TestGenerateFishCompletions(t *testing.T) {
 	tests := []struct {
-		app  App
+		name string
+		got  string
 		want string
 	}{
-		{app, fishApp},
-		{appWithDefault, fishAppWithDefault},
-		{appSingleCmd, fishAppSingleCmd},
-		{appHelpCmd, fishAppHelpCmd},
-		{appSingleCmdWithHelp, fishAppSingleCmdWithHelp},
-		{appHelpBoth, fishAppHelpBoth},
+		{"bash", gotBash, wantBash},
+		{"fish", gotFish, wantFish},
 	}
 
-	for i, test := range tests {
-		t.Run(fmt.Sprintf("%d %v", i, test), func(t *testing.T) {
-			var buf bytes.Buffer
-			test.app.GenerateFishCompletions(&buf, "a'")
-			got := buf.String()
-
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(got, test.want[1:], false)
+			diffs := dmp.DiffMain(test.got, test.want[1:], false)
 
 			t.Log(dmp.DiffPrettyText(diffs))
 			for _, diff := range diffs {
@@ -296,5 +287,4 @@ func TestGenerateFishCompletions(t *testing.T) {
 			}
 		})
 	}
-
 }
