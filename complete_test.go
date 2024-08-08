@@ -136,7 +136,7 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  app,
-			argv: []string{"program", "_c", "cmd1", "-c"},
+			argv: []string{"program", "_c", "cmd1", "-c", ""},
 			want: []string{
 				"aa\t-c C",
 				"bb\t-c C",
@@ -154,7 +154,7 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  appWithDefault,
-			argv: []string{"program", "_c"},
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -174,12 +174,16 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  appWithDefault,
-			argv: []string{"program", "_c", "cmd2"},
-			want: []string{"-o\tFlag", "-h\tShow help", "--help\tShow help"},
+			argv: []string{"program", "_c", "cmd2", ""},
+			want: []string{
+				"-o\tFlag",
+				"-h\tShow help",
+				"--help\tShow help",
+			},
 		},
 		{
 			app:  appSingleCmd,
-			argv: []string{"program", "_c"},
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"-f\tFlag",
 				"--value\tOption",
@@ -196,7 +200,7 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  appHelpCmd,
-			argv: []string{"program", "_c"},
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -205,7 +209,7 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  appSingleCmdWithHelp,
-			argv: []string{"program", "_c"},
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"help\tShow help",
 				"-f\tFlag",
@@ -216,7 +220,7 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  appHelpBoth,
-			argv: []string{"program", "_c"},
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -228,13 +232,11 @@ func TestComplete(t *testing.T) {
 		{
 			app:       app,
 			argv:      []string{"program"},
-			i:         1,
 			wantPanic: true,
 		},
 		{
 			app:       app,
 			argv:      []string{"program", "_c"},
-			i:         3,
 			wantPanic: true,
 		},
 	}
