@@ -3,6 +3,7 @@ module github.com/starriver/charli
 go 1.22
 
 require (
+	github.com/adrg/xdg v0.5.0
 	github.com/fatih/color v1.17.0
 	github.com/go-test/deep v1.1.1
 	github.com/sergi/go-diff v1.3.1

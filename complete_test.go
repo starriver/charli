@@ -68,14 +68,12 @@ func TestComplete(t *testing.T) {
 	tests := []struct {
 		app       cli.App
 		argv      []string
-		i         int
 		want      []string
 		wantPanic bool
 	}{
 		{
 			app:  app,
-			argv: []string{"program", "_c"},
-			i:    2,
+			argv: []string{"program", "_c", ""},
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -86,7 +84,6 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "c"},
-			i:    2,
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -95,7 +92,6 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "-"},
-			i:    2,
 			want: []string{
 				"-h\tShow help",
 				"--help\tShow help",
@@ -104,19 +100,16 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "x"},
-			i:    2,
 			want: []string{},
 		},
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1"},
-			i:    2,
 			want: []string{"cmd1\tHeadline1"},
 		},
 		{
 			app:  app,
-			argv: []string{"program", "_c", "cmd1"},
-			i:    3,
+			argv: []string{"program", "_c", "cmd1", ""},
 			want: []string{
 				"-o\tFlag",
 				"-f\tFlag",
@@ -130,7 +123,6 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "--"},
-			i:    3,
 			want: []string{
 				"--value\tOption",
 				"--choice\tChoice headline",
@@ -140,13 +132,11 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "--", "--"},
-			i:    4,
 			want: []string{},
 		},
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "-c"},
-			i:    4,
 			want: []string{
 				"aa\t-c C",
 				"bb\t-c C",
@@ -155,25 +145,16 @@ func TestComplete(t *testing.T) {
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "-c", "a"},
-			i:    4,
 			want: []string{"aa\t-c C"},
 		},
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "-x"},
-			i:    3,
 			want: []string{},
-		},
-		{
-			app:  app,
-			argv: []string{"program", "_c", "cmd1", "-c", "a"},
-			i:    2,
-			want: []string{"cmd1\tHeadline1"},
 		},
 		{
 			app:  appWithDefault,
 			argv: []string{"program", "_c"},
-			i:    2,
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -189,19 +170,16 @@ func TestComplete(t *testing.T) {
 		{
 			app:  appWithDefault,
 			argv: []string{"program", "_c", "--v"},
-			i:    2,
 			want: []string{"--value\tOption"},
 		},
 		{
 			app:  appWithDefault,
 			argv: []string{"program", "_c", "cmd2"},
-			i:    3,
 			want: []string{"-o\tFlag", "-h\tShow help", "--help\tShow help"},
 		},
 		{
 			app:  appSingleCmd,
 			argv: []string{"program", "_c"},
-			i:    2,
 			want: []string{
 				"-f\tFlag",
 				"--value\tOption",
@@ -214,13 +192,11 @@ func TestComplete(t *testing.T) {
 		{
 			app:  appSingleCmd,
 			argv: []string{"program", "_c", "--v"},
-			i:    2,
 			want: []string{"--value\tOption"},
 		},
 		{
 			app:  appHelpCmd,
 			argv: []string{"program", "_c"},
-			i:    2,
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -230,7 +206,6 @@ func TestComplete(t *testing.T) {
 		{
 			app:  appSingleCmdWithHelp,
 			argv: []string{"program", "_c"},
-			i:    2,
 			want: []string{
 				"help\tShow help",
 				"-f\tFlag",
@@ -242,7 +217,6 @@ func TestComplete(t *testing.T) {
 		{
 			app:  appHelpBoth,
 			argv: []string{"program", "_c"},
-			i:    2,
 			want: []string{
 				"cmd1\tHeadline1",
 				"cmd2\tCommand",
@@ -279,7 +253,7 @@ func TestComplete(t *testing.T) {
 			}()
 
 			var buf bytes.Buffer
-			test.app.Complete(&buf, test.i, test.argv)
+			test.app.Complete(&buf, test.argv)
 			got := strings.TrimSpace(buf.String())
 			want := strings.Join(test.want, "\n")
 

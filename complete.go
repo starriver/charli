@@ -9,19 +9,13 @@ import (
 
 // Prints newline-separated completions. i should be the index of the arg being
 // completed in argv.
-func (app *App) Complete(w io.Writer, i int, argv []string) {
+func (app *App) Complete(w io.Writer, argv []string) {
 	if len(argv) < 2 {
 		panic("argv appears truncated")
 	}
 
-	// Add an empty string to the end for if we're completing from nothing.
-	args := append(argv[2:], "")
-	nargs := len(args)
-	i -= 2
-
-	if i < 0 || i >= nargs {
-		panic("Completion index out of bounds")
-	}
+	args := argv[2:]
+	i := len(args) - 1
 
 	// First ensure the arg being completed isn't beyond a --.
 	for j := 0; j < i; j++ {
