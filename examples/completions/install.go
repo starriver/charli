@@ -10,9 +10,14 @@ import (
 	cli "github.com/starriver/charli"
 )
 
+var installDescription = `
+Installs bash and fish completions.
+`
+
 var install = cli.Command{
-	Name:     "install",
-	Headline: "Install completions",
+	Name:        "install",
+	Headline:    "Install completions",
+	Description: installDescription,
 	Run: func(r *cli.Result) bool {
 		if r.Fail {
 			return false
@@ -51,7 +56,8 @@ func InstallBash() (bool, error) {
 		return false, err
 	}
 
-	f, err := os.Create(filepath.Join(dir, "charli-example"))
+	path := filepath.Join(dir, "charli-example")
+	f, err := os.Create(path)
 	if err != nil {
 		return false, err
 	}
@@ -59,6 +65,7 @@ func InstallBash() (bool, error) {
 
 	cli.GenerateBashCompletions(f, "completions", "--_complete")
 
+	fmt.Printf("bash completions installed to: %s\n", path)
 	return true, nil
 }
 
@@ -74,7 +81,8 @@ func InstallFish() (bool, error) {
 		return false, err
 	}
 
-	f, err := os.Create(filepath.Join(dir, "charli-example"))
+	path := filepath.Join(dir, "charli-example")
+	f, err := os.Create(path)
 	if err != nil {
 		return false, err
 	}
@@ -82,5 +90,6 @@ func InstallFish() (bool, error) {
 
 	cli.GenerateFishCompletions(f, "completions", "--_complete")
 
+	fmt.Printf("fish completions installed to: %s\n", path)
 	return true, nil
 }
