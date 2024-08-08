@@ -274,19 +274,22 @@ func TestComplete(t *testing.T) {
 
 var wantBash = `
 _complete_charli_a_a_-A0_() {
-	for c in $('a+a_-A0\'' --_complete ${COMP_WORDS[@]:1:$COMP_CWORD}); do
-		COMPREPLY+=("${c%%	*}")
-	done
+	local cur="${COMP_WORDS[$COMP_CWORD]}"
+	local iprev="$(( $COMP_CWORD - 1 ))"
+	while IFS= read -r c; do
+		COMPREPLY+=("${c%%$'\t'*}")
+	done <<< "$('a+a_-A0\'' --_complete ${COMP_WORDS[@]:1:$iprev} "$cur")"
 }
-complete -o bashdefault -F _complete_charli_a_a_-A0_ 'a+a_-A0\''
+complete -F _complete_charli_a_a_-A0_ 'a+a_-A0\''
 `
 
 var wantFish = `
-function __complete_charli_a_a_-A0_
+function __fish_complete_charli_a_a_-A0_
 	set -l tokens (commandline -cop)
-	'a+a_-A0\'' --_complete $tokens[1..-1]
+	set -l cur (commandline -ct)
+	'a+a_-A0\'' --_complete $tokens[2..-1] "$cur"
 end
-complete -c 'a+a_-A0\'' -a "(__complete_charli_a_a_-A0_)"
+complete -c 'a+a_-A0\'' -f -k -a '(__fish_complete_charli_a_a_-A0_)'
 `
 
 func TestCompletionScripts(t *testing.T) {

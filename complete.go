@@ -10,7 +10,7 @@ import (
 // Prints newline-separated completions. i should be the index of the arg being
 // completed in argv.
 func (app *App) Complete(w io.Writer, argv []string) {
-	if len(argv) < 2 {
+	if len(argv) <= 2 {
 		panic("argv appears truncated")
 	}
 
@@ -198,20 +198,22 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 	// Write a function that calls the program with the required completion
 	// data.
 	fmt.Fprintf(w, "%s() {\n", funcName)
+	fmt.Fprintln(w, "\tlocal cur=\"${COMP_WORDS[$COMP_CWORD]}\"")
+	fmt.Fprintln(w, "\tlocal iprev=\"$(( $COMP_CWORD - 1 ))\"")
+	fmt.Fprintln(w, "\twhile IFS= read -r c; do")
+	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"${c%%$'\\t'*}\")")
 	fmt.Fprintf(
 		w,
-		"\tfor c in $(%s %s ${COMP_WORDS[@]:1:$COMP_CWORD}); do\n",
+		"\tdone <<< \"$(%s %s ${COMP_WORDS[@]:1:$iprev} \"$cur\")\"\n",
 		qprogram,
 		flag,
 	)
-	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"${c%%\t*}\")")
-	fmt.Fprintln(w, "\tdone")
 	fmt.Fprintln(w, "}")
 
 	// Complete using the function.
 	fmt.Fprintf(
 		w,
-		"complete -o bashdefault -F %s %s\n",
+		"complete -F %s %s\n",
 		funcName,
 		qprogram,
 	)
@@ -228,11 +230,12 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 // If in doubt, use "--_complete".
 func GenerateFishCompletions(w io.Writer, program, flag string) {
 	qprogram := quote(program)
-	funcName := fmt.Sprintf("__complete_charli_%s", shellID(program))
+	funcName := fmt.Sprintf("__fish_complete_charli_%s", shellID(program))
 
 	fmt.Fprintf(w, "function %s\n", funcName)
 	fmt.Fprintln(w, "\tset -l tokens (commandline -cop)")
-	fmt.Fprintf(w, "\t%s %s $tokens[1..-1]\n", qprogram, flag)
+	fmt.Fprintln(w, "\tset -l cur (commandline -ct)")
+	fmt.Fprintf(w, "\t%s %s $tokens[2..-1] \"$cur\"\n", qprogram, flag)
 	fmt.Fprintln(w, "end")
-	fmt.Fprintf(w, "complete -c %s -a \"(%s)\"\n", qprogram, funcName)
+	fmt.Fprintf(w, "complete -c %s -f -k -a '(%s)'\n", qprogram, funcName)
 }
