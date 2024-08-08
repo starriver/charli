@@ -235,117 +235,49 @@ func TestComplete(t *testing.T) {
 	}
 }
 
-var wantBashCompletion = `_complete_aa_-A0() {
-	for c in $('a+a_-A0\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
-		COMPREPLY+=("$c")
+var wantBash = `
+_complete_charli_a_a_-A0_() {
+	for c in $('a+a_-A0\'' --_complete ${COMP_WORDS[@]:1:$COMP_CWORD}); do
+		COMPREPLY+=("${c%%	*}")
 	done
 }
-complete -o bashdefault -F _complete_aa_-A0 'a+a_-A0\''
+complete -o bashdefault -F _complete_charli_a_a_-A0_ 'a+a_-A0\''
 `
 
-func TestGenerateBashCompletions(t *testing.T) {
-	// This function actually doesn't touch the App at all ftm - but it might
-	// in future. GenerateFishCompletions *does* touch the App. So for
-	// consistency, all of them have App as receiver.
+var wantFish = `
+function __complete_charli_a_a_-A0_
+	set -l tokens (commandline -cop)
+	'a+a_-A0\'' --_complete $tokens[1..-1]
+end
+complete -c 'a+a_-A0\'' -a "(__complete_charli_a_a_-A0_)"
+`
+
+func TestCompletionScripts(t *testing.T) {
+	// Use a really ugly name to test the identifiers + escaping.
+	program := "a+a_-A0'"
+	flag := "--_complete"
 
 	var buf bytes.Buffer
-	// Use a really ugly name to test the identifiers + escaping.
-	app.GenerateBashCompletions(&buf, "a+a_-A0'", "_c")
-	got := buf.String()
+	GenerateBashCompletions(&buf, program, flag)
+	gotBash := buf.String()
 
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(got, wantBashCompletion, false)
+	buf = bytes.Buffer{}
+	GenerateFishCompletions(&buf, program, flag)
+	gotFish := buf.String()
 
-	t.Log(dmp.DiffPrettyText(diffs))
-	for _, diff := range diffs {
-		if diff.Type != diffmatchpatch.DiffEqual {
-			t.Fail()
-		}
-	}
-}
-
-var fishApp = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppWithDefault = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppSingleCmd = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -l 'value' -r
-complete -c 'a\'' -k -s 'c' -l 'choice' -r -x -a 'aa bb'
-`
-
-var fishAppHelpCmd = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand help' -x -a 'cmd1 cmd2' -d 'Command'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppSingleCmdWithHelp = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -l 'value' -r
-complete -c 'a\'' -k -s 'c' -l 'choice' -r -x -a 'aa bb'
-`
-
-var fishAppHelpBoth = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand help' -x -a 'cmd1 cmd2' -d 'Command'
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-func TestGenerateFishCompletions(t *testing.T) {
 	tests := []struct {
-		app  App
+		name string
+		got  string
 		want string
 	}{
-		{app, fishApp},
-		{appWithDefault, fishAppWithDefault},
-		{appSingleCmd, fishAppSingleCmd},
-		{appHelpCmd, fishAppHelpCmd},
-		{appSingleCmdWithHelp, fishAppSingleCmdWithHelp},
-		{appHelpBoth, fishAppHelpBoth},
+		{"bash", gotBash, wantBash},
+		{"fish", gotFish, wantFish},
 	}
 
-	for i, test := range tests {
-		t.Run(fmt.Sprintf("%d %v", i, test), func(t *testing.T) {
-			var buf bytes.Buffer
-			test.app.GenerateFishCompletions(&buf, "a'")
-			got := buf.String()
-
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(got, test.want[1:], false)
+			diffs := dmp.DiffMain(test.got, test.want[1:], false)
 
 			t.Log(dmp.DiffPrettyText(diffs))
 			for _, diff := range diffs {
@@ -355,5 +287,4 @@ func TestGenerateFishCompletions(t *testing.T) {
 			}
 		})
 	}
-
 }

@@ -163,7 +163,17 @@ func quote(arg string) string {
 	return fmt.Sprintf("'%s'", strings.ReplaceAll(arg, "'", "\\'"))
 }
 
-// Generate a bash completion script.
+var idRe *regexp.Regexp
+
+// Derive a shell identifier-compatible name for program.
+func shellID(program string) string {
+	if idRe == nil {
+		idRe = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
+	}
+	return idRe.ReplaceAllString(program, "_")
+}
+
+// Writes a bash completion script to w.
 //
 // program should be the program name (which will presumably be in the user's
 // PATH). flag should be a special trigger flag, *including* hyphen prefixes,
@@ -172,27 +182,20 @@ func quote(arg string) string {
 //
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
 // If in doubt, use "--_complete".
-func (app *App) GenerateBashCompletions(w io.Writer, program, flag string) {
-	program = quote(program)
-
-	// We want a valid name for the completion function, so strip illegal
-	// characters from the program name.
-	re := regexp.MustCompile(`[^a-zA-Z0-9_-]`)
-	funcName := fmt.Sprintf(
-		"_complete_%s",
-		re.ReplaceAllString(program, ""),
-	)
+func GenerateBashCompletions(w io.Writer, program, flag string) {
+	qprogram := quote(program)
+	funcName := fmt.Sprintf("_complete_charli_%s", shellID(program))
 
 	// Write a function that calls the program with the required completion
 	// data.
 	fmt.Fprintf(w, "%s() {\n", funcName)
 	fmt.Fprintf(
 		w,
-		"\tfor c in $(%s %s (( $COMP_CWORD + 1 )) $COMP_WORDS); do\n",
-		program,
+		"\tfor c in $(%s %s ${COMP_WORDS[@]:1:$COMP_CWORD}); do\n",
+		qprogram,
 		flag,
 	)
-	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"$c\")")
+	fmt.Fprintln(w, "\t\tCOMPREPLY+=(\"${c%%\t*}\")")
 	fmt.Fprintln(w, "\tdone")
 	fmt.Fprintln(w, "}")
 
@@ -201,101 +204,26 @@ func (app *App) GenerateBashCompletions(w io.Writer, program, flag string) {
 		w,
 		"complete -o bashdefault -F %s %s\n",
 		funcName,
-		program,
+		qprogram,
 	)
 }
 
-// Generate Fish completions. These are pretty comprehensive and often don't
-// need to call the binary at all.
-func (app *App) GenerateFishCompletions(w io.Writer, program string) {
-	prefix := fmt.Sprintf("complete -c %s -k", quote(program))
+// Writes a fish completion script to w.
+//
+// program should be the program name (which will presumably be in the user's
+// PATH). flag should be a special trigger flag, *including* hyphen prefixes,
+// which your program should use to bypass normal execution and generate
+// completions instead (presumably using Complete(...)).
+//
+// flag can be anything you want, but don't use anything ambiguous to your CLI.
+// If in doubt, use "--_complete".
+func GenerateFishCompletions(w io.Writer, program, flag string) {
+	qprogram := quote(program)
+	funcName := fmt.Sprintf("__complete_charli_%s", shellID(program))
 
-	describeCmd := func(cmd *Command) {
-		fmt.Fprintf(
-			w,
-			"%s -n __fish_cmdname_needs_subcommand -a %s",
-			prefix,
-			quote(cmd.Name),
-		)
-		if len(cmd.Headline) != 0 {
-			fmt.Fprintf(w, " -d %s", quote(cmd.Headline))
-		}
-		fmt.Fprint(w, "\n")
-	}
-
-	// Note that this only provides the complete flags without the prefix. Needs
-	// to be flexible enough for both single- and multi-command operation (see
-	// below).
-	describeOpt := func(opt *Option) {
-		if opt.Short != 0 {
-			fmt.Fprintf(w, " -s %s", quote(string(opt.Short)))
-		}
-		if opt.Long != "" {
-			fmt.Fprintf(w, " -l %s", quote(opt.Long))
-		}
-		if opt.Headline != "" {
-			fmt.Fprintf(w, " -d %s", quote(opt.Headline))
-		}
-
-		if opt.Flag {
-			fmt.Fprint(w, " -f")
-		} else {
-			fmt.Fprint(w, " -r")
-		}
-
-		if len(opt.Choices) != 0 {
-			fmt.Fprintf(w, " -x -a %s", quote(strings.Join(opt.Choices, " ")))
-		}
-	}
-
-	if app.hasHelpCommand() {
-		describeCmd(&fakeHelpCmd)
-
-		if len(app.Commands) != 1 {
-			cmdNames := strings.Builder{}
-			for _, cmd := range app.Commands {
-				cmdNames.WriteString(cmd.Name)
-				cmdNames.WriteString(" ")
-			}
-			s := cmdNames.String()
-			s = s[:len(s)-1]
-			fmt.Fprintf(w,
-				"%s -n '__fish_cmdname_using_subcommand help' -x -a %s -d 'Command'\n",
-				prefix,
-				quote(s),
-			)
-		}
-	}
-
-	if app.hasHelpFlags() {
-		fmt.Fprint(w, prefix)
-		describeOpt(&fakeHelpOption)
-		fmt.Fprint(w, "\n")
-	}
-
-	if len(app.Commands) == 1 {
-		for _, opt := range append(app.GlobalOptions, app.Commands[0].Options...) {
-			fmt.Fprint(w, prefix)
-			describeOpt(&opt)
-			fmt.Fprint(w, "\n")
-		}
-		return
-	}
-
-	for _, cmd := range app.Commands {
-		describeCmd(&cmd)
-
-		// Yes this is horrifically ugly.
-		optPrefix := fmt.Sprintf(" -n %s", quote(
-			fmt.Sprintf("__fish_cmdname_using_subcommand %s", cmd.Name),
-		))
-
-		opts := append(app.GlobalOptions, cmd.Options...)
-
-		for _, opt := range opts {
-			fmt.Fprint(w, prefix, optPrefix)
-			describeOpt(&opt)
-			fmt.Fprint(w, "\n")
-		}
-	}
+	fmt.Fprintf(w, "function %s\n", funcName)
+	fmt.Fprintln(w, "\tset -l tokens (commandline -cop)")
+	fmt.Fprintf(w, "\t%s %s $tokens[1..-1]\n", qprogram, flag)
+	fmt.Fprintln(w, "end")
+	fmt.Fprintf(w, "complete -c %s -a \"(%s)\"\n", qprogram, funcName)
 }
