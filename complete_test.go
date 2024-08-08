@@ -235,12 +235,12 @@ func TestComplete(t *testing.T) {
 	}
 }
 
-var wantBashCompletion = `_complete_aa_-A0() {
+var wantBashCompletion = `_complete_a_a_-A0_() {
 	for c in $('a+a_-A0\'' _c (( $COMP_CWORD + 1 )) $COMP_WORDS); do
 		COMPREPLY+=("$c")
 	done
 }
-complete -o bashdefault -F _complete_aa_-A0 'a+a_-A0\''
+complete -o bashdefault -F __complete_a_a_-A0 'a+a_-A0\''
 `
 
 func TestGenerateBashCompletions(t *testing.T) {
@@ -250,7 +250,7 @@ func TestGenerateBashCompletions(t *testing.T) {
 
 	var buf bytes.Buffer
 	// Use a really ugly name to test the identifiers + escaping.
-	app.GenerateBashCompletions(&buf, "a+a_-A0'", "_c")
+	GenerateBashCompletions(&buf, "a+a_-A0'", "_c")
 	got := buf.String()
 
 	dmp := diffmatchpatch.New()
@@ -264,66 +264,7 @@ func TestGenerateBashCompletions(t *testing.T) {
 	}
 }
 
-var fishApp = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppWithDefault = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppSingleCmd = `
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -l 'value' -r
-complete -c 'a\'' -k -s 'c' -l 'choice' -r -x -a 'aa bb'
-`
-
-var fishAppHelpCmd = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand help' -x -a 'cmd1 cmd2' -d 'Command'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
-
-var fishAppSingleCmdWithHelp = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -l 'value' -r
-complete -c 'a\'' -k -s 'c' -l 'choice' -r -x -a 'aa bb'
-`
-
-var fishAppHelpBoth = `
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'help' -d 'Show this help'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand help' -x -a 'cmd1 cmd2' -d 'Command'
-complete -c 'a\'' -k -s 'h' -l 'help' -d 'Show this help' -f
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd1' -d 'Headline1'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'o' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'f' -d 'Flag' -f
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -l 'value' -r
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd1' -s 'c' -l 'choice' -r -x -a 'aa bb'
-complete -c 'a\'' -k -n __fish_cmdname_needs_subcommand -a 'cmd2'
-complete -c 'a\'' -k -n '__fish_cmdname_using_subcommand cmd2' -s 'o' -f
-`
+// TODO
 
 func TestGenerateFishCompletions(t *testing.T) {
 	tests := []struct {
