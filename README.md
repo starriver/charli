@@ -36,13 +36,12 @@ Use charli if you want to:
 
 ## Design
 
-We wrote this because very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
+We wrote this because we're very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
 
 ### Comparisons
 
 - Its closest relative is probably [mitchellh/cli](https://github.com/mitchellh/cli) (now archived). Like charli, it has imperative operation and is configured with structs – though uses some factories.
 - [urfave/cli](https://charli.urfave.org/)'s config structs (`App`, `Command` etc.) have a similar layout.
-
 
 ### Goals
 
