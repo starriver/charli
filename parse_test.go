@@ -760,7 +760,7 @@ func TestErrorHandler(t *testing.T) {
 		Commands: []cli.Command{
 			{},
 		},
-		ErrorHandler: func(str string) {
+		ErrorHandler: func(error) {
 			errs += 1
 		},
 	}
