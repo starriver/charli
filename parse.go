@@ -319,8 +319,9 @@ func (app *App) Parse(argv []string) (r Result) {
 			metavar = "ARG"
 		}
 		r.Error(MissingValueError{
-			Option: pairedOption.Option,
-			Arg:    pairedOptionArg,
+			Option:  pairedOption.Option,
+			Arg:     pairedOptionArg,
+			Metavar: metavar,
 		})
 	}
 
@@ -335,14 +336,19 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	if !rca.Varadic && n > rca.Count {
 		r.Error(TooManyArgsError{
-			Args: r.Args,
+			Args: r.Args[rca.Count:],
 		})
 		r.Args = r.Args[:rca.Count]
 	}
 
 	if n < rca.Count {
+		metavars := rca.Metavars[n:]
+		if rca.Varadic {
+			metavars = rca.Metavars[n:rca.Count]
+		}
+
 		r.Error(MissingArgsError{
-			Metavars: rca.Metavars[n:],
+			Metavars: metavars,
 		})
 	}
 
@@ -384,7 +390,7 @@ func (err InvalidCommandError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"'%s' isn't a valid command - try: %s %s",
+		"'%s' isn't a valid command - try: `%s %s`",
 		err.Name,
 		err.Program,
 		suggestHelpArg(err.SuggestHelp),
@@ -398,7 +404,7 @@ type MissingCommandError struct {
 
 func (err MissingCommandError) Error() string {
 	return fmt.Sprintf(
-		"no command supplied - try: %s %s",
+		"no command supplied - try: `%s %s`",
 		err.Program,
 		suggestHelpArg(err.HelpAccess),
 	)
@@ -434,7 +440,7 @@ func (err AmbiguousValueError) Error() string {
 		"hint: if '%s' is meant as the value for '%s', use '=' instead:\n",
 		err.Value, err.OptionArg,
 	)
-	s += fmt.Sprintf("  '%s=%s'", err.OptionArg, err.Value)
+	s += fmt.Sprintf("  %s=%s", err.OptionArg, err.Value)
 	return s
 }
 
