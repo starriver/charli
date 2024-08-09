@@ -27,7 +27,7 @@ var freeform = cli.Command{
 
 	Run: func(r *cli.Result) bool {
 		if r.Options["name"].Value == "" {
-			r.Error("I need a name...")
+			r.ErrorString("I need a name...")
 		}
 
 		var age int

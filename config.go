@@ -50,7 +50,7 @@ type App struct {
 	// Set this if you'd prefer to handle Parse(...) errors as they happen. The
 	// default behaviour (if this isn't set) is to aggregate them in the
 	// returned Result.Errs slice.
-	ErrorHandler func(string)
+	ErrorHandler func(error)
 
 	// Highlight color in help output.
 	HighlightColor color.Attribute

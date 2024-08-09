@@ -64,7 +64,10 @@ func (app *App) Parse(argv []string) (r Result) {
 				r.Command = cmdMap[args[i]]
 				// If invalid, continue to display help anyway.
 				if r.Command == nil {
-					r.Errorf("'%s' isn't a valid command.", args[i])
+					r.Error(InvalidCommandError{
+						Program: program,
+						Name:    args[i],
+					})
 				} else {
 					invalidCmd = false
 				}
@@ -118,17 +121,21 @@ func (app *App) Parse(argv []string) (r Result) {
 			}
 			if !possibleCommand {
 				// The user might've supplied flags - but no command.
-				r.Errorf("no command supplied - try `%s --help`", program)
+				r.Error(MissingCommandError{
+					Program:    program,
+					HelpAccess: ha,
+				})
 				r.Action = Fatal
 				return
 			}
 
 			r.Command = cmdMap[args[0]]
 			if r.Command == nil {
-				r.Errorf(
-					"'%s' isn't a command - try `%s --help`",
-					args[0], program,
-				)
+				r.Error(InvalidCommandError{
+					Program:     program,
+					Name:        args[0],
+					SuggestHelp: ha,
+				})
 				r.Action = Fatal
 				return
 			}
@@ -168,7 +175,7 @@ func (app *App) Parse(argv []string) (r Result) {
 
 	// This is only used twice below, but it feels just a lil too complex to
 	// repeat.
-	checkChoice := func(option *Option, value string, combinedArg string) bool {
+	checkChoice := func(option *Option, value string, joinedArg string) bool {
 		if len(option.Choices) == 0 {
 			return true
 		}
@@ -179,11 +186,11 @@ func (app *App) Parse(argv []string) (r Result) {
 			}
 		}
 
-		r.Errorf(
-			"invalid '%s': must be one of [%s]",
-			combinedArg,
-			strings.Join(option.Choices, "|"),
-		)
+		r.Error(InvalidChoiceError{
+			Option:    option,
+			JoinedArg: joinedArg,
+			Value:     value,
+		})
 		return false
 	}
 
@@ -198,18 +205,11 @@ func (app *App) Parse(argv []string) (r Result) {
 					pairedOption.IsSet = true
 				}
 			} else {
-				// TODO: optimise this.
-				var e string
-				e += fmt.Sprintf(
-					"missing or ambiguous option value: '%s %s'\n",
-					pairedOptionArg, arg,
-				)
-				e += fmt.Sprintf(
-					"hint: if '%s' is meant as the value for '%s', use '=' instead:\n",
-					arg, pairedOptionArg,
-				)
-				e += fmt.Sprintf("  '%s=%s'", pairedOptionArg, arg)
-				r.Errorf("%s", e)
+				r.Error(AmbiguousValueError{
+					Option:    pairedOption.Option,
+					OptionArg: pairedOptionArg,
+					Value:     arg,
+				})
 			}
 
 			pairedOption = nil
@@ -234,13 +234,17 @@ func (app *App) Parse(argv []string) (r Result) {
 			l := len(arg)
 			if l == 1 {
 				// Weird case: '-' as an option
-				r.Errorf("unrecognized option: '-'")
+				r.Error(InvalidOptionError{
+					Arg: "-",
+				})
 				continue
 			}
 
 			if l > 2 {
 				if strings.ContainsRune(arg, '=') {
-					r.Errorf("combined short option can't contain '=': '%s'", arg)
+					r.Error(CombinedEqualsError{
+						Arg: arg,
+					})
 					continue
 				}
 				combinedShort = true
@@ -259,18 +263,30 @@ func (app *App) Parse(argv []string) (r Result) {
 			o := r.Options[name]
 			if o == nil {
 				if combinedShort {
-					r.Errorf("unrecognized option '%s' in '%s'", name, arg)
+					r.Error(InvalidOptionError{
+						Arg:         "-" + name,
+						CombinedArg: arg,
+					})
 				} else {
-					r.Errorf("unrecognized option: '%s'", arg)
+					r.Error(InvalidOptionError{
+						Arg: arg,
+					})
 				}
 				continue
 			}
 
 			if o.IsSet {
 				if combinedShort {
-					r.Errorf("duplicate option '%s' in '%s'", name, arg)
+					r.Error(DuplicateOptionError{
+						Option:      o,
+						Arg:         "-" + name,
+						CombinedArg: arg,
+					})
 				} else {
-					r.Errorf("duplicate option: '%s'", arg)
+					r.Error(DuplicateOptionError{
+						Option: o,
+						Arg:    arg,
+					})
 				}
 				continue
 			}
@@ -278,7 +294,11 @@ func (app *App) Parse(argv []string) (r Result) {
 			if o.Option.Flag {
 				o.IsSet = true
 			} else if combinedShort {
-				r.Errorf("can't use '%s' in combined short option '%s'", name, arg)
+				r.Error(CombinedValueError{
+					Option:      o.Option,
+					Arg:         "-" + name,
+					CombinedArg: arg,
+				})
 				continue
 			} else if len(combinedValue) != 0 {
 				ok := checkChoice(o.Option, combinedValue, arg)
@@ -298,7 +318,11 @@ func (app *App) Parse(argv []string) (r Result) {
 		if metavar == "" {
 			metavar = "ARG"
 		}
-		r.Errorf("missing value %s for '%s'", metavar, pairedOptionArg)
+		r.Error(MissingValueError{
+			Option:  pairedOption.Option,
+			Arg:     pairedOptionArg,
+			Metavar: metavar,
+		})
 	}
 
 	// Every option has now been processed - now we just need to validate the
@@ -311,19 +335,21 @@ func (app *App) Parse(argv []string) (r Result) {
 	n := len(r.Args)
 
 	if !rca.Varadic && n > rca.Count {
-		r.Errorf("too many arguments: '%s'", strings.Join(r.Args, "' '"))
+		r.Error(TooManyArgsError{
+			Args: r.Args[rca.Count:],
+		})
 		r.Args = r.Args[:rca.Count]
 	}
 
 	if n < rca.Count {
-		plural := ""
-		if rca.Count-n > 1 {
-			plural = "s"
+		metavars := rca.Metavars[n:]
+		if rca.Varadic {
+			metavars = rca.Metavars[n:rca.Count]
 		}
 
-		metavars := strings.Join(rca.Metavars[n:], " ")
-
-		r.Errorf("missing argument%s: %s", plural, metavars)
+		r.Error(MissingArgsError{
+			Metavars: metavars,
+		})
 	}
 
 	// Depending on how things turned out above, Args can sometimes be a nil
@@ -343,4 +369,168 @@ func isOption(arg string) bool {
 
 func isLongOption(arg string) bool {
 	return strings.HasPrefix(arg, "--")
+}
+
+func suggestHelpArg(ha HelpAccess) string {
+	if ha&HelpFlag == 0 {
+		return "help"
+	}
+	return "--help"
+}
+
+type InvalidCommandError struct {
+	Program     string
+	Name        string
+	SuggestHelp HelpAccess
+}
+
+func (err InvalidCommandError) Error() string {
+	if err.SuggestHelp == 0 {
+		return fmt.Sprintf("'%s' isn't a valid command.", err.Name)
+	}
+
+	return fmt.Sprintf(
+		"'%s' isn't a valid command - try: `%s %s`",
+		err.Name,
+		err.Program,
+		suggestHelpArg(err.SuggestHelp),
+	)
+}
+
+type MissingCommandError struct {
+	Program    string
+	HelpAccess HelpAccess
+}
+
+func (err MissingCommandError) Error() string {
+	return fmt.Sprintf(
+		"no command supplied - try: `%s %s`",
+		err.Program,
+		suggestHelpArg(err.HelpAccess),
+	)
+}
+
+type InvalidChoiceError struct {
+	Option    *Option
+	JoinedArg string
+	Value     string
+}
+
+func (err InvalidChoiceError) Error() string {
+	return fmt.Sprintf(
+		"invalid '%s': must be one of [%s]",
+		err.JoinedArg,
+		strings.Join(err.Option.Choices, "|"),
+	)
+}
+
+type AmbiguousValueError struct {
+	Option    *Option
+	OptionArg string
+	Value     string
+}
+
+func (err AmbiguousValueError) Error() string {
+	var s string
+	s += fmt.Sprintf(
+		"missing or ambiguous option value: '%s %s'\n",
+		err.OptionArg, err.Value,
+	)
+	s += fmt.Sprintf(
+		"hint: if '%s' is meant as the value for '%s', use '=' instead:\n",
+		err.Value, err.OptionArg,
+	)
+	s += fmt.Sprintf("  %s=%s", err.OptionArg, err.Value)
+	return s
+}
+
+type InvalidOptionError struct {
+	Arg         string
+	CombinedArg string
+}
+
+func (err InvalidOptionError) Error() string {
+	if len(err.CombinedArg) != 0 {
+		return fmt.Sprintf(
+			"unrecognized option '%s' in '%s'",
+			err.Arg,
+			err.CombinedArg,
+		)
+	}
+	return fmt.Sprintf("unrecognized option: '%s'", err.Arg)
+}
+
+type CombinedEqualsError struct {
+	Arg string
+}
+
+func (err CombinedEqualsError) Error() string {
+	return fmt.Sprintf("combined short option can't contain '=': '%s'", err.Arg)
+}
+
+type DuplicateOptionError struct {
+	// nb. OptionResult here so downstream can see previous value
+	Option      *OptionResult
+	Arg         string
+	CombinedArg string
+}
+
+func (err DuplicateOptionError) Error() string {
+	if len(err.CombinedArg) != 0 {
+		return fmt.Sprintf(
+			"duplicate option '%s' in '%s'",
+			err.Arg,
+			err.CombinedArg,
+		)
+	}
+	return fmt.Sprintf("duplicate option: '%s'", err.Arg)
+}
+
+type CombinedValueError struct {
+	Option      *Option
+	Arg         string
+	CombinedArg string
+}
+
+func (err CombinedValueError) Error() string {
+	return fmt.Sprintf(
+		"can't use '%s' in combined short option '%s'",
+		err.Arg,
+		err.CombinedArg,
+	)
+}
+
+type MissingValueError struct {
+	Option  *Option
+	Arg     string
+	Metavar string
+}
+
+func (err MissingValueError) Error() string {
+	return fmt.Sprintf("missing value %s for '%s'", err.Metavar, err.Arg)
+}
+
+type TooManyArgsError struct {
+	Args []string
+}
+
+func (err TooManyArgsError) Error() string {
+	return fmt.Sprint("too many arguments: ", strings.Join(err.Args, ""))
+}
+
+type MissingArgsError struct {
+	Metavars []string
+}
+
+func (err MissingArgsError) Error() string {
+	plural := ""
+	if len(err.Metavars) > 1 {
+		plural = "s"
+	}
+
+	return fmt.Sprintf(
+		"missing argument%s: %s",
+		plural,
+		strings.Join(err.Metavars, " "),
+	)
 }

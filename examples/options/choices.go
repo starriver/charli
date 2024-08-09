@@ -29,7 +29,7 @@ var choices = cli.Command{
 		// Compare this with the r.Options["name"] check in freeform.go. If the
 		// name is set here, it must be one of the above choices.
 		if !r.Options["name"].IsSet {
-			r.Error("I need a name...")
+			r.ErrorString("I need a name...")
 		}
 
 		var age int
