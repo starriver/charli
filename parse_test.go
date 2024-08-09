@@ -24,7 +24,8 @@ var testParseTemplate = cli.App{
 			Name: "options",
 			Options: []cli.Option{
 				{
-					Long: "long",
+					Long:    "long",
+					Metavar: "LONG",
 				},
 				{
 					Short:   'c',
@@ -108,7 +109,7 @@ var testParseCases = []struct {
 	helpAccess cli.HelpAccess
 	output     cli.Result
 	cmdName    string
-	errCount   int
+	errs       []string
 }{
 	{
 		input: []string{},
@@ -128,7 +129,7 @@ var testParseCases = []struct {
 		output: cli.Result{
 			Action: cli.Fatal,
 		},
-		errCount: 1,
+		errs: []string{"'nope' isn't a valid command - try: `program --help`"},
 	},
 	{
 		// Invalid command
@@ -136,7 +137,7 @@ var testParseCases = []struct {
 		output: cli.Result{
 			Action: cli.HelpError,
 		},
-		errCount: 1,
+		errs: []string{"'nope' isn't a valid command."},
 	},
 	{
 		// Extraneous arg when asking for help
@@ -234,7 +235,7 @@ var testParseCases = []struct {
 		output: cli.Result{
 			Action: cli.Fatal,
 		},
-		errCount: 1,
+		errs: []string{"'help' isn't a valid command - try: `program --help`"},
 	},
 	{
 		input:      []string{"help"},
@@ -347,8 +348,10 @@ var testParseCases = []struct {
 				"g":      {},
 			},
 		},
-		errCount: 1,
-		cmdName:  "options",
+		cmdName: "options",
+		errs: []string{
+			"missing or ambiguous option value: '--long --choice=a'\nhint: if '--choice=a' is meant as the value for '--long', use '=' instead:\n  --long=--choice=a",
+		},
 	},
 	{
 		// Nothing supplied for --long (at end)
@@ -364,8 +367,8 @@ var testParseCases = []struct {
 				"g":      {},
 			},
 		},
-		errCount: 1,
-		cmdName:  "options",
+		cmdName: "options",
+		errs:    []string{"missing value LONG for '--long'"},
 	},
 	{
 		// -c=a is invalid, d is invalid choice, - isn't an option
@@ -381,8 +384,12 @@ var testParseCases = []struct {
 				"g":      {},
 			},
 		},
-		errCount: 3,
-		cmdName:  "options",
+		cmdName: "options",
+		errs: []string{
+			"combined short option can't contain '=': '-c=a'",
+			"invalid '--choice d': must be one of [a|b|c]",
+			"unrecognized option: '-'",
+		},
 	},
 	{
 		input: []string{"combined", "-ab"},
@@ -422,8 +429,8 @@ var testParseCases = []struct {
 				"g": {},
 			},
 		},
-		errCount: 1,
-		cmdName:  "combined",
+		cmdName: "combined",
+		errs:    []string{"unrecognized option '-x' in '-abx'"},
 	},
 	{
 		input: []string{"args3", "a", "b", "c"},
@@ -448,8 +455,8 @@ var testParseCases = []struct {
 			},
 			Args: []string{"a", "b", "c"},
 		},
-		errCount: 1,
-		cmdName:  "args3",
+		cmdName: "args3",
+		errs:    []string{"too many arguments: d"},
 	},
 	{
 		// Too few args
@@ -462,8 +469,22 @@ var testParseCases = []struct {
 			},
 			Args: []string{"a"},
 		},
-		errCount: 1,
-		cmdName:  "args3",
+		cmdName: "args3",
+		errs:    []string{"missing arguments: B C"},
+	},
+	{
+		// Too few args
+		input: []string{"args3", "a", "b"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"opt": {},
+				"g":   {},
+			},
+			Args: []string{"a", "b"},
+		},
+		cmdName: "args3",
+		errs:    []string{"missing argument: C"},
 	},
 	{
 		input: []string{"args3", "a", "--opt", "b", "c"},
@@ -490,19 +511,6 @@ var testParseCases = []struct {
 		cmdName: "args3",
 	},
 	{
-		input: []string{"args3", "a", "b"},
-		output: cli.Result{
-			Action: cli.Proceed,
-			Options: map[string]*cli.OptionResult{
-				"opt": {},
-				"g":   {},
-			},
-			Args: []string{"a", "b"},
-		},
-		errCount: 1,
-		cmdName:  "args3",
-	},
-	{
 		input: []string{"args3v", "a", "b", "c", "d"},
 		output: cli.Result{
 			Action: cli.Proceed,
@@ -522,8 +530,8 @@ var testParseCases = []struct {
 			},
 			Args: []string{"a", "b"},
 		},
-		errCount: 1,
-		cmdName:  "args3v",
+		cmdName: "args3v",
+		errs:    []string{"missing argument: C"},
 	},
 	{
 		input: []string{"args0v"},
@@ -589,8 +597,8 @@ var testParseCases = []struct {
 				"flag": {},
 			},
 		},
-		cmdName:  "only",
-		errCount: 1,
+		cmdName: "only",
+		errs:    []string{"too many arguments: only"},
 	},
 	{
 		input:     []string{"-h", "only"},
@@ -634,7 +642,7 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}
-			if test.errCount != 0 {
+			if len(test.errs) != 0 {
 				want.Fail = true
 			}
 
@@ -657,14 +665,15 @@ func TestParse(t *testing.T) {
 				o.Option = nil
 			}
 
-			// TODO: a more proper error test. Counting them will do for now.
-			if len(got.Errs) != test.errCount {
-				t.Errorf(
-					"error count: got %v, want %v\nerrors: %v",
-					len(got.Errs),
-					test.errCount,
-					got.Errs,
-				)
+			if test.errs == nil {
+				test.errs = []string{}
+			}
+			gotErrStrings := make([]string, len(got.Errs))
+			for i, err := range got.Errs {
+				gotErrStrings[i] = err.Error()
+			}
+			if diff := deep.Equal(gotErrStrings, test.errs); diff != nil {
+				t.Error(diff)
 			}
 			got.Errs = nil
 
