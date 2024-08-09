@@ -1,5 +1,7 @@
 # c~~har~~li
 
+[![Coverage Status](https://coveralls.io/repos/github/starriver/charli/badge.svg?branch=main)](https://coveralls.io/github/starriver/charli?branch=main)
+
 A small, pure(-ish) CLI parser and help formatting library.
 
 - Reads your CLI configuration (options, flags etc.) from structs.
