@@ -342,9 +342,12 @@ func (app *App) Parse(argv []string) (r Result) {
 	}
 
 	if n < rca.Count {
-		metavars := rca.Metavars[n:]
-		if rca.Varadic {
-			metavars = rca.Metavars[n:rca.Count]
+		metavars := make([]string, rca.Count-n)
+		for i := range len(metavars) {
+			metavars[i] = "ARG"
+			if n+i < len(rca.Metavars) {
+				metavars[i] = rca.Metavars[n+i]
+			}
 		}
 
 		r.Error(MissingArgsError{
