@@ -23,7 +23,8 @@ go get github.com/starriver/charli
 ```
 
 - [See the guide](./docs/tutorial.md) for usage instructions.
-- [Examples](./examples) are also available.
+- [Examples](./examples)
+- [Reference](https://pkg.go.dev/github.com/starriver/charli)
 
 ## Who's this for?
 
