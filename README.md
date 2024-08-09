@@ -1,6 +1,7 @@
 # c~~har~~li
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/starriver/charli.svg)](https://pkg.go.dev/github.com/starriver/charli)
+[![Go Report Card](https://goreportcard.com/badge/github.com/starriver/charli)](https://goreportcard.com/report/github.com/starriver/charli)
 [![Coverage Status](https://coveralls.io/repos/github/starriver/charli/badge.svg?branch=main)](https://coveralls.io/github/starriver/charli?branch=main)
 
 A small, pure(-ish) CLI parser and help formatting library.
