@@ -54,6 +54,9 @@ var testParseTemplate = cli.App{
 					Short: 'c',
 					Flag:  true,
 				},
+				{
+					Short: 'v',
+				},
 			},
 		},
 		{
@@ -66,7 +69,7 @@ var testParseTemplate = cli.App{
 			},
 			Args: cli.Args{
 				Count:    3,
-				Metavars: []string{"A", "B", "C"},
+				Metavars: []string{"A", "B"},
 			},
 		},
 		{
@@ -125,11 +128,29 @@ var testParseCases = []struct {
 	},
 	{
 		// Invalid command
-		input: []string{"nope"},
+		input: []string{"-x"},
+		output: cli.Result{
+			Action: cli.Fatal,
+		},
+		errs: []string{"no command supplied - try: `program --help`"},
+	},
+	{
+		// Invalid command
+		input:      []string{"nope"},
+		helpAccess: cli.HelpFlag | cli.HelpCommand,
 		output: cli.Result{
 			Action: cli.Fatal,
 		},
 		errs: []string{"'nope' isn't a valid command - try: `program --help`"},
+	},
+	{
+		// Invalid command
+		input:      []string{"nope"},
+		helpAccess: cli.HelpCommand,
+		output: cli.Result{
+			Action: cli.Fatal,
+		},
+		errs: []string{"'nope' isn't a valid command - try: `program help`"},
 	},
 	{
 		// Invalid command
@@ -371,7 +392,38 @@ var testParseCases = []struct {
 		errs:    []string{"missing value LONG for '--long'"},
 	},
 	{
-		// -c=a is invalid, d is invalid choice, - isn't an option
+		input: []string{"options", "--choice"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {},
+				"flag":   {},
+				"g":      {},
+			},
+		},
+		cmdName: "options",
+		errs:    []string{"missing value ARG for '--choice'"},
+	},
+	{
+		input: []string{"options", "--flag", "--flag"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"long":   {},
+				"c":      {},
+				"choice": {},
+				"f":      {IsSet: true},
+				"flag":   {IsSet: true},
+				"g":      {},
+			},
+		},
+		cmdName: "options",
+		errs:    []string{"duplicate option: '--flag'"},
+	},
+	{
 		input: []string{"options", "-c=a", "--choice", "d", "-"},
 		output: cli.Result{
 			Action: cli.Proceed,
@@ -399,6 +451,7 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
+				"v": {},
 				"g": {},
 			},
 		},
@@ -412,6 +465,7 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {IsSet: true},
+				"v": {},
 				"g": {},
 			},
 		},
@@ -426,11 +480,57 @@ var testParseCases = []struct {
 				"a": {IsSet: true},
 				"b": {IsSet: true},
 				"c": {},
+				"v": {},
 				"g": {},
 			},
 		},
 		cmdName: "combined",
 		errs:    []string{"unrecognized option '-x' in '-abx'"},
+	},
+	{
+		input: []string{"combined", "-aba"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"a": {IsSet: true},
+				"b": {IsSet: true},
+				"c": {},
+				"v": {},
+				"g": {},
+			},
+		},
+		cmdName: "combined",
+		errs:    []string{"duplicate option '-a' in '-aba'"},
+	},
+	{
+		input: []string{"combined", "-abv"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"a": {IsSet: true},
+				"b": {IsSet: true},
+				"c": {},
+				"v": {},
+				"g": {},
+			},
+		},
+		cmdName: "combined",
+		errs:    []string{"can't use '-v' in combined short option '-abv'"},
+	},
+	{
+		input: []string{"combined", "-ab=a"},
+		output: cli.Result{
+			Action: cli.Proceed,
+			Options: map[string]*cli.OptionResult{
+				"a": {},
+				"b": {},
+				"c": {},
+				"v": {},
+				"g": {},
+			},
+		},
+		cmdName: "combined",
+		errs:    []string{"combined short option can't contain '=': '-ab=a'"},
 	},
 	{
 		input: []string{"args3", "a", "b", "c"},
@@ -470,7 +570,7 @@ var testParseCases = []struct {
 			Args: []string{"a"},
 		},
 		cmdName: "args3",
-		errs:    []string{"missing arguments: B C"},
+		errs:    []string{"missing arguments: B ARG"},
 	},
 	{
 		// Too few args
@@ -484,7 +584,7 @@ var testParseCases = []struct {
 			Args: []string{"a", "b"},
 		},
 		cmdName: "args3",
-		errs:    []string{"missing argument: C"},
+		errs:    []string{"missing argument: ARG"},
 	},
 	{
 		input: []string{"args3", "a", "--opt", "b", "c"},
@@ -697,7 +797,7 @@ func TestParsePanic(t *testing.T) {
 		},
 	}
 
-	dupeOption := cli.App{
+	dupeOptionShort := cli.App{
 		Commands: []cli.Command{
 			{
 				Options: []cli.Option{
@@ -710,6 +810,23 @@ func TestParsePanic(t *testing.T) {
 		GlobalOptions: []cli.Option{
 			{
 				Short: 'a',
+			},
+		},
+	}
+
+	dupeOptionLong := cli.App{
+		Commands: []cli.Command{
+			{
+				Options: []cli.Option{
+					{
+						Long: "long",
+					},
+				},
+			},
+		},
+		GlobalOptions: []cli.Option{
+			{
+				Long: "long",
 			},
 		},
 	}
@@ -746,9 +863,14 @@ func TestParsePanic(t *testing.T) {
 		dupeCmd.Parse([]string{"program"})
 	})
 
-	t.Run("dupe option", func(t *testing.T) {
+	t.Run("dupe option (short)", func(t *testing.T) {
 		defer expectPanic(t)
-		dupeOption.Parse([]string{"program"})
+		dupeOptionShort.Parse([]string{"program"})
+	})
+
+	t.Run("dupe option (long)", func(t *testing.T) {
+		defer expectPanic(t)
+		dupeOptionLong.Parse([]string{"program"})
 	})
 
 	t.Run("invalid default command", func(t *testing.T) {
