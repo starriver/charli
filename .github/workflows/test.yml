@@ -25,4 +25,5 @@ jobs:
           COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           go install github.com/mattn/goveralls@latest
+          asdf reshim golang
           goveralls -coverprofile=cover -service=github
