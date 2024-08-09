@@ -144,12 +144,38 @@ func TestComplete(t *testing.T) {
 		},
 		{
 			app:  app,
+			argv: []string{"program", "_c", "cmd1", "--choice", ""},
+			want: []string{
+				"aa\t--choice C",
+				"bb\t--choice C",
+			},
+		},
+		{
+			app:  app,
 			argv: []string{"program", "_c", "cmd1", "-c", "a"},
 			want: []string{"aa\t-c C"},
 		},
 		{
 			app:  app,
 			argv: []string{"program", "_c", "cmd1", "-x"},
+			want: []string{},
+		},
+		{
+			app:  app,
+			argv: []string{"program", "_c", "-h", "cmd1"},
+			want: []string{"cmd1\tHeadline1"},
+		},
+		{
+			app:  app,
+			argv: []string{"program", "_c", "cmd"},
+			want: []string{
+				"cmd1\tHeadline1",
+				"cmd2\tCommand",
+			},
+		},
+		{
+			app:  app,
+			argv: []string{"program", "_c", "x", "-"},
 			want: []string{},
 		},
 		{

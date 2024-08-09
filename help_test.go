@@ -15,7 +15,7 @@ import (
 // No default command, 2 subcommands
 var testHelpApp1 = cli.App{
 	Headline:    "Headline",
-	Description: "\nDescription\n",
+	Description: "\nDescription in {-h/--help}\n",
 	Commands: []cli.Command{
 		{
 			Name:     "cmd1",
@@ -32,7 +32,7 @@ const testHelpOutput1 = `
 Headline
 Usage: program [OPTIONS] COMMAND [...]
 
-  Description
+  Description in -h/--help
 
 Options:
   -h/--help  Show this help
