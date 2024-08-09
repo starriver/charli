@@ -80,15 +80,26 @@ type OptionResult struct {
 
 // Note: this is the only file in the lib that provides impure functions. Nice!
 
-// Raise an error. App.ErrorHandler(...) will be called if set - otherwise an
-// error will be appeneded to Result.Errs.
-func (r *Result) Error(str string) {
+func (r *Result) Error(err error) {
 	r.Fail = true
 
 	if r.App.ErrorHandler != nil {
-		r.App.ErrorHandler(str)
+		r.App.ErrorHandler(err)
 	} else {
-		r.Errs = append(r.Errs, errors.New(str))
+		r.Errs = append(r.Errs, err)
+	}
+}
+
+// Raise a general error. App.ErrorHandler(...) will be called if set -
+// otherwise an error will be appeneded to Result.Errs.
+func (r *Result) ErrorString(str string) {
+	r.Fail = true
+
+	err := errors.New(str)
+	if r.App.ErrorHandler != nil {
+		r.App.ErrorHandler(err)
+	} else {
+		r.Errs = append(r.Errs, err)
 	}
 }
 
@@ -97,12 +108,12 @@ func (r *Result) Error(str string) {
 func (r *Result) Errorf(format string, a ...any) {
 	r.Fail = true
 
-	str := fmt.Sprintf(format, a...)
+	err := fmt.Errorf(format, a...)
 
 	if r.App.ErrorHandler != nil {
-		r.App.ErrorHandler(str)
+		r.App.ErrorHandler(err)
 	} else {
-		r.Errs = append(r.Errs, errors.New(str))
+		r.Errs = append(r.Errs, err)
 	}
 }
 
