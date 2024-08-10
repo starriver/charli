@@ -48,18 +48,13 @@ type Result struct {
 type Action int
 
 const (
-	// Proceed to Run(...) the command. Exit 0 if Run(...) returns true, nonzero
-	// otherwise.
+	// Proceed to Run(...) the command.
 	Proceed Action = iota
 
-	// Display help. The user explicitly requested it, so exit 0.
-	HelpOK
+	// Display help.
+	Help
 
-	// Display help. The user didn't request it (or requested it wonkily) so
-	// exit nonzero.
-	HelpError
-
-	// Nothing more to do. Exit nonzero.
+	// Do nothing. Result.Fail will always be true.
 	Fatal
 )
 
@@ -118,8 +113,8 @@ func (r *Result) Errorf(format string, a ...any) {
 }
 
 // Shorthand for r.Command.Run(&r).
-func (r *Result) RunCommand() bool {
-	return r.Command.Run(r)
+func (r *Result) RunCommand() {
+	r.Command.Run(r)
 }
 
 // Print app/command help to stderr.

@@ -52,8 +52,9 @@ func (app *App) Parse(argv []string) (r Result) {
 			continue
 		}
 
-		invalidCmd := true
+		r.Action = Help
 
+		invalidCmd := true
 		if !singleCmd && nargs > 1 {
 			// Check the 1st and 2nd args for a command.
 			for i := range 2 {
@@ -76,10 +77,8 @@ func (app *App) Parse(argv []string) (r Result) {
 
 		// Don't error if the user asked for help the "proper" way - with the
 		// help flag, possibly a command, and nothing else.
-		if nargs == 1 || (nargs == 2 && !invalidCmd) {
-			r.Action = HelpOK
-		} else {
-			r.Action = HelpError
+		if !(nargs == 1 || (nargs == 2 && !invalidCmd)) {
+			r.Fail = true
 		}
 
 		return
@@ -116,7 +115,8 @@ func (app *App) Parse(argv []string) (r Result) {
 		} else {
 			if nargs == 0 { // Implicit: app.DefaultCommand can't be set here.
 				// Display help if no command or default.
-				r.Action = HelpError
+				r.Action = Help
+				r.Fail = true
 				return
 			}
 			if !possibleCommand {

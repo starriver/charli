@@ -113,17 +113,19 @@ var testParseCases = []struct {
 	output     cli.Result
 	cmdName    string
 	errs       []string
+	noErrFail  bool
 }{
 	{
 		input: []string{},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
+		noErrFail: true,
 	},
 	{
 		input: []string{"-h"},
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 	},
 	{
@@ -156,7 +158,7 @@ var testParseCases = []struct {
 		// Invalid command
 		input: []string{"nope", "-h"},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
 		errs: []string{"'nope' isn't a valid command."},
 	},
@@ -164,8 +166,9 @@ var testParseCases = []struct {
 		// Extraneous arg when asking for help
 		input: []string{"-h", "-a"},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
+		noErrFail: true,
 	},
 	{
 		input: []string{"zero"},
@@ -180,21 +183,21 @@ var testParseCases = []struct {
 	{
 		input: []string{"-h", "zero"},
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "zero",
 	},
 	{
 		input: []string{"zero", "-h"},
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "zero",
 	},
 	{
 		input: []string{"zero", "--help"},
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "zero",
 	},
@@ -202,25 +205,28 @@ var testParseCases = []struct {
 		// Extraneous arg when asking for help
 		input: []string{"-h", "zero", "-b"},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
-		cmdName: "zero",
+		cmdName:   "zero",
+		noErrFail: true,
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"zero", "-h", "-b"},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
-		cmdName: "zero",
+		cmdName:   "zero",
+		noErrFail: true,
 	},
 	{
 		// Extraneous arg when asking for help
 		input: []string{"zero", "-b", "-h"},
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
-		cmdName: "zero",
+		cmdName:   "zero",
+		noErrFail: true,
 	},
 	{
 		input:      []string{},
@@ -248,7 +254,7 @@ var testParseCases = []struct {
 		input:      []string{"-h"},
 		setDefault: "zero",
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 	},
 	{
@@ -262,21 +268,22 @@ var testParseCases = []struct {
 		input:      []string{"help"},
 		helpAccess: cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 	},
 	{
 		input:      []string{"help", "help"},
 		helpAccess: cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
+		noErrFail: true,
 	},
 	{
 		input:      []string{"help", "zero"},
 		helpAccess: cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "zero",
 	},
@@ -284,7 +291,7 @@ var testParseCases = []struct {
 		input:      []string{"zero", "help"},
 		helpAccess: cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "zero",
 	},
@@ -292,23 +299,26 @@ var testParseCases = []struct {
 		input:      []string{"help", "-h"},
 		helpAccess: cli.HelpFlag | cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
+		noErrFail: true,
 	},
 	{
 		input:      []string{"-h", "help"},
 		helpAccess: cli.HelpFlag | cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
+		noErrFail: true,
 	},
 	{
 		input:      []string{"help", "zero", "-a"},
 		helpAccess: cli.HelpCommand,
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
-		cmdName: "zero",
+		cmdName:   "zero",
+		noErrFail: true,
 	},
 	{
 		input: []string{"options"},
@@ -683,7 +693,7 @@ var testParseCases = []struct {
 		input:     []string{"-h"},
 		useSingle: true,
 		output: cli.Result{
-			Action: cli.HelpOK,
+			Action: cli.Help,
 		},
 		cmdName: "only",
 	},
@@ -704,9 +714,10 @@ var testParseCases = []struct {
 		input:     []string{"-h", "only"},
 		useSingle: true,
 		output: cli.Result{
-			Action: cli.HelpError,
+			Action: cli.Help,
 		},
-		cmdName: "only",
+		cmdName:   "only",
+		noErrFail: true,
 	},
 }
 
@@ -742,7 +753,7 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}
-			if len(test.errs) != 0 {
+			if len(test.errs) != 0 || test.noErrFail {
 				want.Fail = true
 			}
 
