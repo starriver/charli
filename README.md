@@ -34,12 +34,94 @@ Use charli if you want to:
 
 ## Design
 
+### Why did we make this?
+
 We wrote this because we're very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
 
 ### Comparisons
 
 - Its closest relative is probably [mitchellh/cli](https://github.com/mitchellh/cli) (now archived). Like charli, it has imperative operation and is configured with structs – though uses some factories.
 - [urfave/cli](https://charli.urfave.org/)'s config structs (`App`, `Command` etc.) have a similar layout.
+
+### Parser syntax
+
+#### Options
+
+charli supports both short and (GNU-style) long options.
+
+Options normally take a string value. **Flags** are options without a value – ie. they have a boolean output.
+
+Provided that `-o/--option` and `-f/--flag` are configured, all of these are valid:
+
+```sh
+program --option value
+program --option=value
+program -o value
+program --flag
+program -f
+```
+
+If a value starts with `-`, usage of the `--option=value` format is required to prevent ambiguity:
+
+```sh
+program --option -f    # Error!
+program --option=-f    # Valid
+```
+
+Additionally, combined short flags are supported, but *not* combined short options. If `-j` and `-k` are also configured as flags:
+
+```sh
+program -fjk           # Valid
+program -fjko value    # Error!
+program -fjk -o value  # Valid
+```
+
+#### Positional arguments
+
+Any number of positional arguments can be configured. Args can be mixed in with options, and `--` can be used to stop parsing options.
+
+Let's say 2 args are configured:
+
+```sh
+program a b                 # Valid: []string{"a", "b"}
+program a -- -b             # Valid: []string{"a", "-b"}
+program a --option value b  # Valid: []string{"a", "b"}
+program --option a b        # Error! ('a' is the value for --option)
+program a b c               # Error! (too many args)
+```
+
+Regarding the last line above, varadic args are also supported. If enabled, it would become valid.
+
+#### Commands
+
+In all of the above examples, the program has only had a single command. Instead, we can add multiple named commands, which should be supplied as the first argument.
+
+Options can be global or command-specific. Positional arguments are always command-specific.
+
+With `pull` and `push` commands configured, all of these are valid:
+
+```sh
+program pull
+program push
+program pull --option value
+program push -f
+```
+
+A default command can also be configured, allowing the first argument to be omitted. Note that this introduces some ambiguity should the first argument not be an option (ie. not starting with `-`).
+
+#### Requesting help
+
+By default, the special `-h/--help` options can be used to request help – either for the whole program or a single command.
+
+This flag can be supplied anywhere on the command line, but the parser will *suggest* that only certain forms exit with an OK status (it's up to you how to react to this suggestion, though).
+
+```sh
+program -h              # OK - display global help
+program -h pull         # OK - display help for pull
+program pull -h         # OK - display help for pull
+program pull --flag -h  # Error - display help for pull anyway
+program                 # Error - display global help anyway
+```
 
 ### Goals
 
