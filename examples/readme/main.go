@@ -9,6 +9,8 @@ import (
 	cli "github.com/starriver/charli"
 )
 
+// This is the example shown in the screenshot in the readme.
+
 const description = `
 When I go to the club I wanna hear those club classics. I will, however, need
 to choose who to dance {to} and {with}.
