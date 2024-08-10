@@ -20,7 +20,7 @@ To install:
 go get github.com/starriver/charli
 ```
 
-- [See the guide](./docs/tutorial.md) for usage instructions.
+- [See the guide](./docs/guide.md) for usage instructions.
 - [Examples](./examples)
 - [Reference](https://pkg.go.dev/github.com/starriver/charli)
 
@@ -34,14 +34,12 @@ Use charli if you want to:
 
 ## Design
 
-### Why did we make this?
-
-We wrote this because we're very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
+We made charli because we're very picky about how we want our CLIs to look and behave – in particular, we want to engineer complex, imperative flows for validation. The amount of hacking required on other libraries wasn't worth it for us, so we made this instead.
 
 ### Comparisons
 
-- Its closest relative is probably [mitchellh/cli](https://github.com/mitchellh/cli) (now archived). Like charli, it has imperative operation and is configured with structs – though uses some factories.
-- [urfave/cli](https://charli.urfave.org/)'s config structs (`App`, `Command` etc.) have a similar layout.
+- [urfave/cli](https://github.com/urfave/cli) is a great library. Before using charli, try this. It's far more beginner-friendly, yet is probably this library's closest relative. Like charli, it features procedural operation and is configured via struct data – yet provides far more functionality out of the box.
+- [mitchellh/cli](https://github.com/mitchellh/cli) (now archived) also provides a nice degree of control with a procedural style, but instead provides flexibility through its interface types and factories (which you won't find here).
 
 ### Parser syntax
 
@@ -121,6 +119,14 @@ program -h pull         # OK - display help for pull
 program pull -h         # OK - display help for pull
 program pull --flag -h  # Error - display help for pull anyway
 program                 # Error - display global help anyway
+```
+
+`help` can also be optionally enabled as a pseudo-command, which will make all of these valid:
+
+```sh
+program help
+program help pull
+program pull help
 ```
 
 ### Goals
