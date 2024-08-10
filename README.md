@@ -6,11 +6,9 @@
 )](https://youtu.be/bLJ-zfBmChA)
 [![Coverage Status](https://coveralls.io/repos/github/starriver/charli/badge.svg?branch=main)](https://coveralls.io/github/starriver/charli?branch=main)
 
-A freestyle CLI toolkit. Here's how it looks:
+A small CLI toolkit. It includes a **CLI parser**, **help formatter**, and **completer** for bash & fish.
 
 ![Screenshot](./.images/example.png)
-
-charli includes a **CLI parser**, **help formatter**, and **completer** for bash & fish.
 
 [See the code](./examples/readme/) for the above screenshot.
 
