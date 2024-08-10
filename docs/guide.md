@@ -37,9 +37,8 @@ import (
 var app = charli.App{
 	Commands: []charli.Command{
 		{
-			Run: func(r *charli.Result) bool {
+			Run: func(r *charli.Result) {
 				fmt.Println("Hello world!")
-				return true
 			},
 		},
 	},
@@ -85,6 +84,54 @@ func main() {
 }
 ```
 
-Running the program should now output `Hello world!`, but there's quite a lot to unpack here.
+Running the program should now output `Hello world!`, and you'll be able to request help with `-h/--help`. If you're using `go run`, you can just stick the flag on the end:
 
--
+```sh
+go run . --help
+```
+
+As for `main()`, there quite a lot to unpack here.
+
+- First, we check `r.Action`. This indicates what the parser thinks we should do next.
+	- `charli.Proceed` means you should proceed to call your `Command`'s `Run(...)` function. `r.RunCommand()` is shorthand for this.
+	- `charli.Help` means you should show help to the user. `r.PrintHelp()` does just that, printing help to stderr.
+	- Not shown here is `charli.Fatal`, which means you should do neither.
+- After this, we print everything in `r.Errs`.
+	- Lots of errors can be encountered during `Parse(...)`, so `r.Errs` is a slice.
+- Lastly, we exit with an error status if `r.Fail` is set.
+	- This field may be true even if `r.Errs` is empty. We'll explain why later.
+
+---
+
+There's one problem left with our program. Try running:
+
+```sh
+go run . --foo
+```
+
+You'll notice the output looks like this:
+
+```
+Hello world!
+unrecognized option: '--foo'
+```
+
+This seems off – our command has continued to run despite the parser producing errors.
+
+This is because our command's `Run(...)` function needs to pay attention to `r.Fail`. If it's true, we should `return` before doing any meaningful work.
+
+So let's change it to:
+
+```go
+Run: func(r *charli.Result) {
+	if r.Fail {
+		return
+	}
+
+	fmt.Println("Hello world!")
+},
+```
+
+It might seem counter-intuitive that the parser would tell us to call the `Run(...)` function when `r.Fail` is already true, but there's a very important reason that charli is designed this way. In the next section, we'll show you why.
+
+## Options & flags
