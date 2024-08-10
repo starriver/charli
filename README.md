@@ -31,8 +31,8 @@ go get github.com/starriver/charli
 Use charli if you want to:
 
 - **Configure your CLI with struct data.** It doesn't use the builder pattern, struct tags or reflection.
-- **Bring your own input validation.** The parser outputs a map of known options & arguments according to your configuration. It also aggregates errors caused by unknown args and bad syntax. Nothing else is transformed.
 - **Have complete control over your app's I/O**. Expect no magic or surprises! None of the core functions have any side-effects.
+- **Bring your own input validation.** The parser outputs a map of options & positional args according to your config. It aggregates errors caused by unknown args and bad syntax. Nothing else is transformed: values are strings, flags are bools.
 
 ## Design
 
@@ -55,8 +55,10 @@ We wrote this because we're very picky about how we want our CLIs to look and be
 	- Allow downstream validations to continue even with parse errors.
 	- However: make downstream validations aware of previous errors, so that expensive operations can be short-circuited.
 - **Render a relatively sane help format.**
-	- We made
-	- Also, make colors optional ([fatih/color](https://github.com/fatih/color) allows turning them off).
+	- Allow arbitrary highlighting using a set color.
+	- Prefer using raw strings for long description blocks [(example)](./examples/options/main.go).
+	- Make color optional. We use [fatih/color](https://github.com/fatih/color), which allows turning them off (and automatically disables them when not in a tty).
+	- More than anything else, we just made it look the way we wanted it to.
 - **Idiomatic Go.**
 	- Leverage the flexibility of structs and zero values.
 	- Aim for a procedural style.
