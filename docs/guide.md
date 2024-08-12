@@ -138,7 +138,8 @@ Run: func(r *charli.Result) {
 },
 ```
 
-It might seem counter-intuitive that the parser would tell us to call the `Run(...)` function when `r.Fail` is already true, but there's a very important reason that charli is designed this way. In the next section, we'll show you why.
+> [!NOTE]
+> It might seem counter-intuitive that the parser would tell us to call the `Run(...)` function when `r.Fail` is already true, but there's a very important reason that charli is designed this way. In the next section, we'll show you why.
 
 ## Options & flags
 
@@ -166,6 +167,8 @@ var app = charli.App{
 				{
 					Short: 'n',
 					Long: "name",
+					Headline: "State your name",
+					Metavar: "NAME",
 				},
 				{
 					Short: 'f',
@@ -200,8 +203,8 @@ $ go run . -h
 Usage: main [OPTIONS] [...]
 
 Options:
-  -h/--help  Show this help
-  -n/--name
+  -h/--help       Show this help
+  -n/--name NAME  State your name
   -f/--flag
 ```
 
@@ -235,6 +238,8 @@ Run: func(r *charli.Result) {
 },
 ```
 
+`r.Errorf(...)` appends an error to `r.Errs`, and sets `r.Fail`.
+
 Running the program again, we can check our work:
 
 ```
@@ -242,6 +247,65 @@ $ go run . --name Calvin -f
 Hello Calvin!
 You set the flag!
 
-$ go run . --name 'Calvin Broadus' -f
+$ go run . --name 'Calvin Broadus'
 name must be a single word: 'Calvin Broadus'
+```
+
+> [!NOTE]
+> As mentioned earlier, this is why `Run(...)` needs to check `r.Fail`. Before the program stops, we want to show the user as many errors as possible. This is so that they don't have to keep running our program, correcting one input error at a time.
+
+## Positional arguments
+
+We can supply more args as input that aren't anything to do with our options. These are **positional arguments**.
+
+By default, these aren't allowed. Try running:
+
+```
+$ go run . some random words
+too many arguments: 'some random words'
+```
+
+Let's make our program accept some positional arguments. To keep things simple, we'll replace the entire `App`:
+
+```go
+var app = charli.App{
+	Commands: []charli.Command{
+		{
+			Args: charli.Args{
+				Count: 3,
+				Metavars: []string{"NAME", "AGE", "STATUS"}
+			},
+
+			Run: func(r *charli.Result) {
+				if r.Fail {
+					return
+				}
+
+				for i, arg := range r.Args {
+					fmt.Printf("%d: %s\n", r.Command.Args.Metavars[i], arg)
+				}
+			},
+		},
+	},
+}
+```
+
+Running with `-h/--help`, we can see the args listed on the usage line:
+
+```
+$ go run . -h
+Usage: main [OPTIONS] NAME AGE STATUS
+...
+```
+
+…and we can try supplying them:
+
+```
+$ go run . Calvin 52 Hustlin
+NAME: Calvin
+AGE: 52
+STATUS: Hustlin
+
+$ go run . Calvin
+missing arguments: AGE STATUS
 ```
