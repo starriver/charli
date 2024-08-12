@@ -1,6 +1,6 @@
 # Guide
 
-This doc will guide you through all of charli's features, and will outline some best practices.
+This is a quick guide through charli's main features.
 
 ## Before you start…
 
@@ -309,3 +309,94 @@ STATUS: Hustlin
 $ go run . Calvin
 missing arguments: AGE STATUS
 ```
+
+> [!NOTE]
+> Options can be mixed in anywhere with positional args.
+>
+> Try adding the options from earlier back into your `App`, then run:
+>
+> ```
+> go run . Calvin --flag 52 Hustlin
+> ```
+
+### Varadic arguments
+
+You can allow an unlimited number of positional args by setting `Varadic`. In this case, `Count` becomes the minimum.
+
+Let's change the program to just print out every positional arg
+
+## Commands
+
+You can split up your program's functionality using commands, like how the Go CLI has `go run`, `go build` et al.
+
+So far, we've only used one command – but you've probably noticed that `App.Commands` is a slice.
+
+Let's make a program with two commands, `push` and `pull`. Add these vars:
+
+```go
+var push = charli.Command{
+	Name: "push",
+	Headline: "Push the tempo",
+	Run: func(r *charli.Result) {
+		if r.Fail {
+			return
+		}
+
+		fmt.Println("Pushing...")
+	},
+}
+
+var pull = charli.Command{
+	Name: "pull",
+	Headline: "Maybe dial it back a bit",
+	Run: func(r *charli.Result) {
+		if r.Fail {
+			return
+		}
+
+		fmt.Println("Pulling...")
+	},
+}
+```
+
+> [!TIP]
+> When using multiple commands, it's a good idea to have each as a separate var (lest the indentation gets a bit crazy). If your app gets big, one-command-per-file isn't a bad idea either.
+
+Now replace your `App` again:
+
+```go
+var app = charli.App{
+	Commands: []charli.Command{
+		push,
+		pull,
+	},
+}
+```
+
+We can now see the commands listed with `-h/--help`:
+
+```
+$ go run . -h
+Usage: main [OPTIONS] COMMAND [...]
+
+Options:
+  -h/--help  Show this help
+
+Commands:
+  push  Push the tempo
+  pull  Maybe dial it back a bit
+```
+
+…and we can ensure each command's `Run(...)` is being called:
+
+```
+$ go run . push
+Pushing...
+
+$ go run . pull
+Pulling...
+```
+
+---
+
+That's it for the bulk of charli's features. Everything else is covered in [the examples](../examples/). Thanks for reading!
