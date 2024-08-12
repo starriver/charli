@@ -67,7 +67,7 @@ func (app *App) Help(w io.Writer, program string, cmd *Command) {
 	}
 
 	if app.Headline != "" {
-		printf("%s\n", app.Headline)
+		printf("%s\n", highlight(app.Headline))
 	}
 
 	basename := filepath.Base(program)
