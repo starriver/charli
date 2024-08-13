@@ -1,3 +1,10 @@
+// Package charli is a small CLI toolkit.
+//
+// It includes a CLI parser ([App.Parse]), help formatter ([App.Help]) and shell
+// completions ([App.Complete]).
+//
+// Configure your CLI with an [App]. Apps have one or several [Command]s, each
+// with several [Option]s and [Args].
 package charli
 
 import (
@@ -6,53 +13,87 @@ import (
 	"github.com/fatih/color"
 )
 
-// CLI application configuration.
+// An App contains configuration for your CLI.
 type App struct {
-	// Headline of the app, displayed at the top of help output.
+	// Headline is the text displayed at the top of help output,
+	// above the 'Usage:' line.
 	//
-	// Note that unlike Command.Headline, this is displayed above *everything*,
-	// and in all help output (regardless of command). It also won't be
-	// formatted in the same way ({} won't be highlighted).
+	// Text surrounded by {curly braces} will be highlighted.
 	Headline string
 
-	// Long description of the app, displayed below usage in help output. Should
-	// both start and end with a newline \n.
+	// Description is a longer description of the app,
+	// which may be several paragraphs long.
+	// In is displayed below the 'Usage:' line in help output.
+	// Each line will be indented by 2 spaces.
 	//
-	// This is usually a long, multiline string. Rather the inlining this string
-	// to an App literal, it's recommended to create a raw const string
-	// elsewhere and use that instead, putting each backtick on its own line.
-	// See the examples.
+	// It should start and end with a newline `\n`.
+	// This is because it's designed to be written using a raw string literal,
+	// with each backtick on a separate line, like this:
 	//
-	// Text inside {curly braces} will be highlighted.
+	//  const description = `
+	//  This is the first paragraph.
+	//
+	//  This is the second paragraph.
+	//  `
+	//
+	// The text won't be automatically justified when printed.
+	// Generally, it should be pre-justified at 78 characters
+	// (to make up for the 2-space indent).
+	//
+	// Text surrounded by {curly braces} will be highlighted.
 	Description string
 
-	// The app's commands, in order of display in help output.
+	// Commands configures the app's [Command]s,
+	// in the order they should be displayed in help output.
+	//
+	// If only one command is configured,
+	// the parser won't require a command name will be supplied at all,
+	// and [Command.Name] should be omitted.
+	// Otherwise, all commands must have a name.
+	//
+	// Commands must not have duplicate names.
 	Commands []Command
 
-	// Options that apply to all commands. These are prepended to every
-	// Command.Options slice.
+	// GlobalOptions configures [Option]s that apply to every command in
+	// [App.Commands].
+	// They are effectively prepended to every [Command.Options] slice.
 	//
-	// Note that -h/--help is always available on every command, and even when
-	// no command is selected. The help flag overrides any flag with -h or
-	// --help that you may provide.
+	// Note that unless [App.HelpAccess] explicitly removes it,
+	// `-h/--help` is always available.
+	// The help flags override any flag with -h or --help that you may
+	// configure.
 	GlobalOptions []Option
 
-	// Name of the command to run if none is supplied. Leave blank to require
-	// one.
+	// DefaultCommand is the name of the command to run if none is supplied.
+	// If blank, the parser will require a command.
+	//
+	// Note that setting a default can introduce some ambiguity
+	// where the first supplied argument isn't an option
+	// (ie. it doesn't start with `-`).
+	//
+	// If only one command is configured,
+	// this must be blank.
 	DefaultCommand string
 
-	// How users can access help. This is a bitmask: either HelpFlag,
-	// HelpCommand or both.
+	// HelpAccess specifies how users can access help.
 	//
-	// If nothing is supplied, will default to HelpFlag.
+	// This is a bitmask.
+	// It should be [HelpFlag], [HelpCommand], or both.
+	//
+	// If nothing is supplied, it will default to [HelpFlag].
 	HelpAccess HelpAccess
 
-	// Set this if you'd prefer to handle Parse(...) errors as they happen. The
-	// default behaviour (if this isn't set) is to aggregate them in the
-	// returned Result.Errs slice.
+	// ErrorHandler is a callback which, if set,
+	// will handle [App.Parse] errors as they happen.
+	//
+	// If this *isn't* set,
+	// errors will be aggregated in [Result.Errs].
 	ErrorHandler func(error)
 
-	// Highlight color in help output.
+	// HighlightColor is the color used for highlighting in help output.
+	//
+	// To disable color, don't use this.
+	// Instead, set [github.com/fatih/color.NoColor] to true.
 	HighlightColor color.Attribute
 }
 
