@@ -6,75 +6,86 @@ import (
 	"os"
 )
 
-// Parsing results. Returned by App.Parse(...).
+// A Result is a collection of results returned by [App.Parse].
 type Result struct {
-	// Suggested action. Note that regardless of this value, Errs may be
-	// populated.
+	// Action indicates what the parser suggests should happen next.
+	// See [Action] for details.
 	Action Action
 
-	// All errors encountered during Parse(...). You may choose to append your
-	// errors from your own validations.
+	// Errs is a slice of all errors encountered during parsing.
+	// You may choose to append errors from your own validations
+	// using the [Result.Error] functions.
 	//
-	// Note that if App.ErrorHandler was set, errors won't be appended here by
-	// default - but Fail will still be appropriately set. So, prefer checking
-	// Fail rather than len(Errs) == 0.
+	// Note that if [App.ErrorHandler] is set, this slice will not be appended
+	// to automatically.
+	// [App.ErrorHandler] may re-implement this behavior, if desired.
 	Errs []error
 
-	// Whether any errors have occurred so far. Calling Result.Error(...) or
-	// Result.Errorf(...) will set this.
+	// Fail is true if any error has occurred during parsing.
+	// If you are using the [Result.Error] functions in your own validations,
+	// any call to those functions will set this to true.
+	//
+	// If true, it is suggested that the program exits with a failure code.
+	//
+	// Note also that it is valid for Fail to be true when [Result.Errs] is
+	// empty - for example, when [Result.Action] is [Help], but extraneous
+	// arguments were supplied.
 	Fail bool
 
-	// The app you called Parse(...) on.
+	// App is the [App] that [App.Parse] was called on.
 	App *App
 
-	// The chosen command. May be nil if Action != Proceed.
+	// Command is the [Command] chosen by the user.
+	// This may be nil when [Result.Action] != [Proceed].
 	Command *Command
 
-	// Map of option values.
+	// Options is a map of [Option] names to [OptionResult]s.
 	//
-	// You can access values with either the short or long option names. Don't
-	// include hyphens - eg. use "o" or "opt" rather than "-o" or "--opt".
+	// Both [Option.Short] and [Option.Long] will be set as keys for the
+	// [OptionResult] for a given [Option].
+	// Don't prepend the hyphens in either case (ie. use `opt` as a key,
+	// rather than `--opt`).
 	Options map[string]*OptionResult
 
-	// List of positional args.
+	// Args is a slice of the positional arguments.
 	//
-	// In the case of too many args being supplied, len(Args) won't be more than
-	// Command.Args.Count - that is, the extraneous args will be dropped. This
-	// obviously doesn't apply if Command.Args.Varadic is set.
+	// In the case of too many arguments being supplied,
+	// `len(Args)` won't be more than [Args.Count] for the given [Command].
+	// In other words, the extraneous args will be dropped.
 	Args []string
 }
 
-// Suggested action after parsing.
+// Action indicates what the parser suggests should happen next.
 type Action int
 
 const (
-	// Proceed to Run(...) the command.
-	Proceed Action = iota
-
-	// Display help.
-	Help
-
-	// Do nothing. Result.Fail will always be true.
-	Fatal
+	Proceed Action = iota // proceed to call [Command.Run]
+	Help                  // display help
+	Fatal                 // nothing else to do; [Result.Fail] will always be true
 )
 
-// Parsing results for a single option.
+// An OptionResult contains parsing results for a single option.
 type OptionResult struct {
-	// The original Option that this OptionResult provides for.
+	// Option is the [Option] that this refers to.
 	Option *Option
 
-	// The option's string value. This may be blank if an empty value was
-	// supplied (eg. --opt '') - check IsSet to be sure.
+	// Value is the option's string value.
+	// This may be blank if an empty value was supplied (like `--opt ''`) -
+	// [OptionResult.IsSet] is preferable when checking whether an option
+	// was supplied at all.
 	//
 	// If the option is a flag, this will always be blank.
 	Value string
 
-	// Whether the option was supplied.
+	// IsSet indicates whether the option was supplied.
 	IsSet bool
 }
 
-// Note: this is the only file in the lib that provides impure functions. Nice!
-
+// Error reports a pre-made [error] and sets [Result.Fail] to true.
+// This is called by [App.Parse], and you can use it in your own validations.
+// Unless [App.ErrorHandler] is set,
+// the error will be appended to [Result.Errs].
+// Otherwise, the handler will be called.
 func (r *Result) Error(err error) {
 	r.Fail = true
 
@@ -85,8 +96,12 @@ func (r *Result) Error(err error) {
 	}
 }
 
-// Raise a general error. App.ErrorHandler(...) will be called if set -
-// otherwise an error will be appeneded to Result.Errs.
+// ErrorString reports an [error] described by str and sets [Result.Fail] to
+// true.
+// This is called by [App.Parse], and you can use it in your own validations.
+// Unless [App.ErrorHandler] is set,
+// the error will be appended to [Result.Errs].
+// Otherwise, the handler will be called.
 func (r *Result) ErrorString(str string) {
 	r.Fail = true
 
@@ -98,8 +113,12 @@ func (r *Result) ErrorString(str string) {
 	}
 }
 
-// Raise an error. App.ErrorHandler(...) will be called if set - otherwise an
-// error will be appeneded to Result.Errs.
+// Errorf reports an [error] using the specified format and args and sets
+// [Result.Fail] to true.
+// This is called by [App.Parse], and you can use it in your own validations.
+// Unless [App.ErrorHandler] is set,
+// the error will be appended to [Result.Errs].
+// Otherwise, the handler will be called.
 func (r *Result) Errorf(format string, a ...any) {
 	r.Fail = true
 
@@ -112,12 +131,14 @@ func (r *Result) Errorf(format string, a ...any) {
 	}
 }
 
-// Shorthand for r.Command.Run(&r).
+// RunCommand calls [Command.Run] for the command the user chose.
+// This is shorthand for `r.Command.Run(&r)`.
 func (r *Result) RunCommand() {
 	r.Command.Run(r)
 }
 
-// Print app/command help to stderr.
+// PrintHelp writes global or command help to stderr, depending on whether the
+// user selected a valid command.
 func (r *Result) PrintHelp() {
 	r.App.Help(os.Stderr, os.Args[0], r.Command)
 }
