@@ -4,7 +4,7 @@ This is a quick guide through charli's main features.
 
 ## Before you start…
 
-charli isn't for everyone! Other CLI libraries give you a lot more out of the box. This library gives you a lot of control, but that control might end up costing you more work. [Remember Uncle Ben's advice.](https://en.wikipedia.org/wiki/With_great_power_comes_great_responsibility)
+charli isn't for everyone! Other CLI libraries include a lot more out of the box. This library gives you a lot of control, but that control might end up costing you more work. [Remember Uncle Ben's advice.](https://en.wikipedia.org/wiki/With_great_power_comes_great_responsibility)
 
 That said, we've tried to make this guide a quick read. Give charli a try and see what you think.
 
@@ -397,6 +397,20 @@ $ go run . pull
 Pulling...
 ```
 
+> [!TIP]
+> You can set `App.DefaultCommand`, which allows omitting the default command's name. For example, if we set it to `"push"`:
+>
+> ```
+> $ go run .
+> Pushing...
+> ```
+>
+> Note that this introduces some ambiguity should the first argument not be an option (ie. not starting with `-`).
+
 ---
 
-That's it for the bulk of charli's features. Everything else is covered in [the examples](../examples/). Thanks for reading!
+That's it for the bulk of charli's features. Everything else is covered in [the examples](../examples/), including:
+
+- Setting a `Description` for your `App` and `Command`s
+- Using `{curly braces}` for highlighting in descriptions & headlines
+- Setting up shell completions
