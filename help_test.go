@@ -10,8 +10,6 @@ import (
 	"github.com/starriver/charli"
 )
 
-// TODO: test color output.
-
 // No default command, 2 subcommands
 var testHelpApp1 = charli.App{
 	Headline:    "Headline",

@@ -25,7 +25,8 @@ var fakeHelpCmd = Command{
 
 // Help writes CLI help to w.
 //
-// program should be the name of the program, usually os.Args[0].
+// program should be the name of the program,
+// usually the first element of [os.Args].
 //
 // If cmd is nil, global help will be written.
 // Otherwise, command help will be written.
