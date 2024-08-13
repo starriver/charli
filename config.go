@@ -112,7 +112,8 @@ type Command struct {
 	//
 	// In global help output,
 	// it is displayed alongside the command name in the 'Commands:' listing.
-	// In command help output, it is also displayed below the 'Usage:' line.
+	// In command help output,
+	// it is also displayed below the 'Usage:' line.
 	//
 	// Text surrounded by {curly braces} will be highlighted.
 	Headline string
@@ -177,56 +178,98 @@ type Command struct {
 	Run func(r *Result)
 }
 
-// Configuration for a single option, providing a value or a flag.
+// An Option contains configuration for a single CLI option.
 type Option struct {
-	// Short option name, used for single-dashed args (like '-a'). Don't include
-	// the hyphen. This is optional, but one of either Short of Long must be
-	// specified.
+	// Short is the short option name. This and/or [Option.Long] must be set.
+	//
+	// Short options have a single hyphen followed by a character (like `-a`).
+	// Omit the hyphen, as this is a rune.
+	//
+	// `-` isn't a valid value for this,
+	// because `--` is a special argument used to disable option parsing.
 	Short rune
 
-	// Long option name, used for double-dashed args (like '--all'). Don't
-	// include the hyphens. This is optional, but one of either Short of Long
-	// must be specified.
+	// Long is the long option name. This and/or [Option.Short] must be set.
+	//
+	// Long options have a double hyphen followed by a string (like `--option`).
+	// Don't include the hyphens.
 	Long string
 
-	// Set to true if this option is a flag, ie. it takes no value.
+	// Flag indicates whether this option should take no value.
+	// Flags are effectively boolean.
+	//
+	// If true, the option will be listed without [Option.Metavar]
+	// in help output (like `--option` rather than `--option ARG`).
+	//
+	// After parsing, in this option's [OptionResult],
+	// [OptionResult.IsSet] can be used to check whether the flag was supplied.
 	Flag bool
 
-	// If set, adds a simple from-a-list constraint to this option. The
-	// available choices will be appended to the option's headline. Has no
-	// effect on flags.
+	// Choices constrains this option's values to a list.
+	//
+	// Available choices will be appended to the option's headline in help
+	// output.
+	// This should only be used for simple, short sets of strings.
+	//
+	// This is invalid if set on flags.
 	Choices []string
 
-	// Sets a term for this option's value - usually uppercase (like
-	// '-p/--person NAME'). Optional but recommended.
+	// Metavar is the term for this option's value. It is shown in help output
+	// after the option name(s), like `VALUE` in `-o/--option VALUE`.
+	//
+	// If omitted, it will default to `ARG`.
+	//
+	// It should be uppercase, but this is not a requirement.
+	//
+	// It is invalid if set with [Option.Flag].
 	Metavar string
 
-	// Summary of the option. Displayed in the command help, and at the top of
-	// the command's help output. Text inside {curly braces} will be
-	// highlighted.
+	// Headline is a one-line summary of the option,
+	// shown in the 'Options:' section of help output.
+	//
+	// Text surrounded by {curly braces} will be highlighted.
 	Headline string
 }
 
-// Configuration for positional arguments.
+// An Args contains configuration for positional arguments.
 type Args struct {
-	// Number of expected positional args. If Varadic is set, this is the
-	// *minimum* number of positional args.
+	// Count is the number of required positional arguments.
+	//
+	// When parsing, if more positional arguments than Count are supplied,
+	// those arguments are excluded from [Result.Args].
+	//
+	// If [Args.Varadic] is set, this becomes the *minimum* number of arguments.
 	Count int
 
-	// Whether to accept more args than specified in Count.
+	// Varadic indicates whether to allow more positional arguments
+	// than are specified in [Args.Count].
 	Varadic bool
 
-	// Sets term(s) for the args. These are displayed in the usage line at the
-	// top of help. They should be uppercase. '[--]' will be prepended, and
-	// names will be [bracketed] appropriately if Varadic is set.
+	// Metavars is a list of names for the positional arguments.
+	//
+	// Omitted metavars will default to `ARG`.
+	//
+	// They are displayed in the 'Usage:' line at the top of help output,
+	// like `Usage: program ARG1 ARG2 ARG3`.
+	//
+	// They should be uppercase, but this is not a requirement.
+	//
+	// In help output, if [Args.Varadic] is true:
+	//
+	//   - `[--]` will be prepended.
+	//   - Metavars with an index higher than [Args.Count] will be
+	//     `[bracketed]`.
+	//   - The last metavar will be ellipsized, like `ARG...`.
 	Metavars []string
 }
 
+// HelpAccess indicates how help output should be accessed by the CLI user.
+// This is a bitmask.
 type HelpAccess uint8
 
 const (
-	HelpFlag HelpAccess = 1 << iota
-	HelpCommand
+	HelpFlag    HelpAccess = 1 << iota // access via the `-h/--help` flags
+	HelpCommand                        // access via a `help` pseudo-command
 )
 
 func (app *App) hasHelpFlags() bool {
