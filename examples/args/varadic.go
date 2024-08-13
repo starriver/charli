@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 const varadicDescription = `
@@ -13,11 +13,11 @@ above (with the )
 Try supplying {-f/--flag}, or {--}, or both.
 `
 
-var varadic = cli.Command{
+var varadic = charli.Command{
 	Name:        "varadic",
 	Headline:    "Varadic args",
 	Description: varadicDescription,
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'f',
 			Long:     "flag",
@@ -25,17 +25,17 @@ var varadic = cli.Command{
 			Headline: "Try supplying this flag mixed in with the args",
 		},
 	},
-	Args: cli.Args{
+	Args: charli.Args{
 		Count:    1,
 		Metavars: []string{"ONE", "TWO", "OTHERS"},
 		Varadic:  true,
 	},
 
-	Run: func(r *cli.Result) bool {
+	Run: func(r *charli.Result) {
 		cmd := r.Command
 
-		if len(r.Errs) != 0 {
-			return false
+		if r.Fail {
+			return
 		}
 
 		argsCfg := &cmd.Args
@@ -47,7 +47,5 @@ var varadic = cli.Command{
 		if len(r.Args) > 2 {
 			fmt.Printf("%s: %v", argsCfg.Metavars[2], r.Args[2:])
 		}
-
-		return true
 	},
 }

@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
-var flags = cli.Command{
+var flags = charli.Command{
 	Name:     "flags",
 	Headline: "For boolean values",
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'f',
 			Long:     "flag",
@@ -23,9 +23,9 @@ var flags = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) bool {
-		if len(r.Errs) != 0 {
-			return false
+	Run: func(r *charli.Result) {
+		if r.Fail {
+			return
 		}
 
 		if r.Options["f"].IsSet {
@@ -34,7 +34,5 @@ var flags = cli.Command{
 		if r.Options["red"].IsSet {
 			fmt.Println("I'mmmm gonna go.")
 		}
-
-		return true
 	},
 }

@@ -1,11 +1,11 @@
 package main
 
-import cli "github.com/starriver/charli"
+import "github.com/starriver/charli"
 
-var whatever = cli.Command{
+var whatever = charli.Command{
 	Name:     "whatever",
 	Headline: "This command does nothing",
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'f',
 			Long:     "flag",
@@ -13,7 +13,7 @@ var whatever = cli.Command{
 			Headline: "This is a flag",
 		},
 	},
-	Run: func(r *cli.Result) bool {
-		return !r.Fail
+	Run: func(r *charli.Result) {
+		// Nothing to do.
 	},
 }

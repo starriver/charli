@@ -7,40 +7,35 @@ import (
 	"path/filepath"
 
 	"github.com/adrg/xdg"
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 var installDescription = `
 Installs bash and fish completions.
 `
 
-var install = cli.Command{
+var install = charli.Command{
 	Name:        "install",
 	Headline:    "Install completions",
 	Description: installDescription,
-	Run: func(r *cli.Result) bool {
+	Run: func(r *charli.Result) {
 		if r.Fail {
-			return false
+			return
 		}
 
 		bashInstalled, err := InstallBash()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return false
+			r.Error(err)
 		}
 
 		fishInstalled, err := InstallFish()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return false
+			r.Error(err)
 		}
 
 		if !(bashInstalled || fishInstalled) {
-			fmt.Println("Nothing to install.")
-			return false
+			fmt.Fprintln(os.Stderr, "Nothing to install.")
 		}
-
-		return true
 	},
 }
 
@@ -63,7 +58,7 @@ func InstallBash() (bool, error) {
 	}
 	defer f.Close()
 
-	cli.GenerateBashCompletions(f, "completions", "--_complete")
+	charli.GenerateBashCompletions(f, "completions", "--_complete")
 
 	fmt.Printf("bash completions installed to: %s\n", path)
 	return true, nil
@@ -88,7 +83,7 @@ func InstallFish() (bool, error) {
 	}
 	defer f.Close()
 
-	cli.GenerateFishCompletions(f, "completions", "--_complete")
+	charli.GenerateFishCompletions(f, "completions", "--_complete")
 
 	fmt.Printf("fish completions installed to: %s\n", path)
 	return true, nil

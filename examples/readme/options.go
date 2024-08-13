@@ -2,9 +2,9 @@ package main
 
 // Common options.
 
-import cli "github.com/starriver/charli"
+import "github.com/starriver/charli"
 
-var options = []cli.Option{
+var options = []charli.Option{
 	{
 		Short:    'g',
 		Long:     "george",

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 const description = `
@@ -13,9 +13,9 @@ This example demos {charli}'s completions and script generation.
 To install the completions for bash and fish, run the {install} command.
 `
 
-var app = cli.App{
+var app = charli.App{
 	Description: description,
-	Commands: []cli.Command{
+	Commands: []charli.Command{
 		install,
 		whatever,
 	},
@@ -30,18 +30,18 @@ func main() {
 	r := app.Parse(os.Args)
 
 	switch r.Action {
-	case cli.Proceed:
+	case charli.Proceed:
 		// r.RunCommand() is exactly equivalent to r.Command.Run(&r). The
 		// command's Run(...) func should provide further validation, then
 		// (if everything passed) actually do the work.
 		r.RunCommand()
 
-	case cli.Help:
+	case charli.Help:
 		// r.PrintHelp() is exactly equivalent to:
 		//   r.App.Help(os.Stderr, os.Args[0], r.Command)
 		r.PrintHelp()
 
-	case cli.Fatal:
+	case charli.Fatal:
 		// Fatal error, nothing else to do.
 	}
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 const description = `
@@ -18,11 +18,11 @@ Note that this description is written as a raw multiline string, justified at
 80 characters, with a newline at each end. This is how charli expects it!
 `
 
-var app = cli.App{
-	Commands: []cli.Command{
+var app = charli.App{
+	Commands: []charli.Command{
 		{
 			Description: description,
-			Options: []cli.Option{
+			Options: []charli.Option{
 				{
 					Short:    'f',
 					Long:     "flag",
@@ -30,16 +30,14 @@ var app = cli.App{
 					Headline: "Set a flag",
 				},
 			},
-			Run: func(r *cli.Result) bool {
-				if len(r.Errs) != 0 {
-					return false
+			Run: func(r *charli.Result) {
+				if r.Fail {
+					return
 				}
 
 				if r.Options["f"].IsSet {
 					fmt.Println("You set the flag!")
 				}
-
-				return true
 			},
 		},
 	},
@@ -49,18 +47,18 @@ func main() {
 	r := app.Parse(os.Args)
 
 	switch r.Action {
-	case cli.Proceed:
+	case charli.Proceed:
 		// r.RunCommand() is exactly equivalent to r.Command.Run(&r). The
 		// command's Run(...) func should provide further validation, then
 		// (if everything passed) actually do the work.
 		r.RunCommand()
 
-	case cli.Help:
+	case charli.Help:
 		// r.PrintHelp() is exactly equivalent to:
 		//   r.App.Help(os.Stderr, os.Args[0], r.Command)
 		r.PrintHelp()
 
-	case cli.Fatal:
+	case charli.Fatal:
 		// Fatal error, nothing else to do.
 	}
 
