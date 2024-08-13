@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
-var choices = cli.Command{
+var choices = charli.Command{
 	Name:     "choices",
 	Headline: "Also string values, but user must pick from a list",
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'n',
 			Long:     "name",
@@ -25,7 +25,7 @@ var choices = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) bool {
+	Run: func(r *charli.Result) bool {
 		// Compare this with the r.Options["name"] check in freeform.go. If the
 		// name is set here, it must be one of the above choices.
 		if !r.Options["name"].IsSet {

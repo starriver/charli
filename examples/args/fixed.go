@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 const fixedDescription = `
@@ -12,11 +12,11 @@ This example requires 3 fixed args.
 Try supplying {-f/--flag}, or {--}, or both.
 `
 
-var fixed = cli.Command{
+var fixed = charli.Command{
 	Name:        "fixed",
 	Headline:    "Required args",
 	Description: fixedDescription,
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'f',
 			Long:     "flag",
@@ -24,12 +24,12 @@ var fixed = cli.Command{
 			Headline: "Try supplying this flag mixed in with the args",
 		},
 	},
-	Args: cli.Args{
+	Args: charli.Args{
 		Count:    3,
 		Metavars: []string{"ONE", "TWO", "THREE"},
 	},
 
-	Run: func(r *cli.Result) bool {
+	Run: func(r *charli.Result) bool {
 		cmd := r.Command
 
 		if len(r.Errs) != 0 {

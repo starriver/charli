@@ -3,11 +3,11 @@ package charli_test
 import (
 	"testing"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
-var blankResult = cli.Result{
-	App: &cli.App{},
+var blankResult = charli.Result{
+	App: &charli.App{},
 }
 
 func TestErrorString(t *testing.T) {

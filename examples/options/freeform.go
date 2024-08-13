@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
-var freeform = cli.Command{
+var freeform = charli.Command{
 	Name:     "freeform",
 	Headline: "These take any string (including an empty string)",
 
-	Options: []cli.Option{
+	Options: []charli.Option{
 		{
 			Short:    'n',
 			Long:     "name",
@@ -25,7 +25,7 @@ var freeform = cli.Command{
 		},
 	},
 
-	Run: func(r *cli.Result) bool {
+	Run: func(r *charli.Result) bool {
 		if r.Options["name"].Value == "" {
 			r.ErrorString("I need a name...")
 		}

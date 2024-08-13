@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/fatih/color"
-	cli "github.com/starriver/charli"
+	"github.com/starriver/charli"
 )
 
 // This is the example shown in the screenshot in the readme.
@@ -16,9 +16,9 @@ When I go to the club I wanna hear those club classics. I will, however, need
 to choose who to dance {to} and {with}.
 `
 
-var app = cli.App{
+var app = charli.App{
 	Description: description,
-	Commands: []cli.Command{
+	Commands: []charli.Command{
 		self,
 		ag,
 		hudmo,
@@ -39,18 +39,18 @@ func main() {
 	r := app.Parse(os.Args)
 
 	switch r.Action {
-	case cli.Proceed:
+	case charli.Proceed:
 		// r.RunCommand() is exactly equivalent to r.Command.Run(&r). The
 		// command's Run(...) func should provide further validation, then
 		// (if everything passed) actually do the work.
 		r.RunCommand()
 
-	case cli.Help:
+	case charli.Help:
 		// r.PrintHelp() is exactly equivalent to:
 		//   r.App.Help(os.Stderr, os.Args[0], r.Command)
 		r.PrintHelp()
 
-	case cli.Fatal:
+	case charli.Fatal:
 		// Fatal error, nothing else to do.
 	}
 
