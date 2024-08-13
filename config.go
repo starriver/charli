@@ -23,7 +23,11 @@ type App struct {
 
 	// Description is a longer description of the app,
 	// which may be several paragraphs long.
-	// In is displayed below the 'Usage:' line in help output.
+	//
+	// If using only a single command, this won't be displayed.
+	// Instead, set [Command.Description].
+	//
+	// In global help output, this is displayed below the 'Usage:' line.
 	// Each line will be indented by 2 spaces.
 	//
 	// It should start and end with a newline `\n`.
@@ -60,7 +64,7 @@ type App struct {
 	//
 	// Note that unless [App.HelpAccess] explicitly removes it,
 	// `-h/--help` is always available.
-	// The help flags override any flag with -h or --help that you may
+	// The help flags override any flag with `-h` or `--help` that you may
 	// configure.
 	GlobalOptions []Option
 
@@ -97,49 +101,79 @@ type App struct {
 	HighlightColor color.Attribute
 }
 
-// Configuration for a single CLI (sub-)command.
+// A Command contains configuration for a single CLI command.
 type Command struct {
-	// Name of the command that the user will need to specify.
+	// Name is the command name.
+	//
+	// It should be short (ideally a single word, or kebab-case if not).
 	Name string
 
-	// Summary of the command. Displayed in help, below 'Usage:'.
+	// Headline is a one-line summary of the command.
 	//
-	// Text inside {curly braces} will be highlighted.
+	// In global help output,
+	// it is displayed alongside the command name in the 'Commands:' listing.
+	// In command help output, it is also displayed below the 'Usage:' line.
+	//
+	// Text surrounded by {curly braces} will be highlighted.
 	Headline string
 
-	// Long description of the command, displayed below usage in help output.
-	// Should both start and end with a newline \n.
+	// Description is a longer description of the command,
+	// which may be several paragraphs long.
+	// In command help output, it is displayed below the 'Usage:' line.
+	// Each line will be indented by 2 spaces.
 	//
-	// This is usually a long, multiline string. Rather the inlining this string
-	// to a Command literal, it's recommended to create a raw const string
-	// elsewhere and use that instead, putting each backtick on its own line.
-	// See the examples.
+	// It should start and end with a newline `\n`.
+	// This is because it's designed to be written using a raw string literal,
+	// with each backtick on a separate line, like this:
 	//
-	// Text inside {curly braces} will be highlighted.
+	//  const description = `
+	//  This is the first paragraph.
+	//
+	//  This is the second paragraph.
+	//  `
+	//
+	// The text won't be automatically justified when printed.
+	// Generally, it should be pre-justified at 78 characters
+	// (to make up for the 2-space indent).
+	//
+	// Text surrounded by {curly braces} will be highlighted.
 	Description string
 
-	// This command's options, in order of display in help output. If
-	// the parent App.GlobalOptions is set, those options will be prepended.
+	// Options is a slice of this command's unique [Option]s,
+	// in order of display in command help output.
+	// If [App.GlobalOptions] is set, those options will effectively be
+	// prepended to this slice.
 	//
-	// Note that -h/--help is always available on every command, and even when
-	// no command is selected. The help flag overrides any flag with -h or
-	// --help that you may provide.
+	// Note that unless [App.HelpAccess] explicitly removes it,
+	// `-h/--help` is always available.
+	// The help flags override any flag with `-h` or `--help` that you may
+	// configure.
 	Options []Option
 
-	// This command's trailing arguments. It's safe to leave this blank if you
-	// don't have any.
+	// Args is the configuration for this command's positional arguments.
+	//
+	// If left blank, no positional arguments will be allowed.
 	Args Args
 
-	// Function to run if this Command is chosen.
+	// Run is the function to execute if this Command is chosen.
 	//
-	// This is expected to further validate each option's values, *appending* to
-	// r.Errs. If r.Errs has any members by the end of validation, it should
-	// return false before proceeding with its business. At this point, it can
-	// stop appending to r.Errs, but should only return true if the operation
-	// succeeded overall.
+	// Supplying this function is actually entirely optional,
+	// as it's up to you whether to call it.
+	// You may wish to have an entirely different way of reacting to the
+	// command the user has chosen.
 	//
-	// The caller should inspect r.Errs after this function returns, and exit
-	// the program nonzero if it returned false.
+	// If you are supplying a Run function, it should:
+	//
+	//   - Validate the option values in the passed [Result].
+	//   - Call [Result.Error] (or its other `Error*` functions) in the case
+	//     of errors).
+	//   - Return before doing any meaningful work if [Result.Fail] is true.
+	//
+	// [Result.Fail] may additionally be set by this function for any reason.
+	//
+	// Responsibility for processing and displaying [Result.Errs] should
+	// generally be with the caller,
+	// or you may wish to set [App.ErrorHandler].
 	Run func(r *Result)
 }
 
