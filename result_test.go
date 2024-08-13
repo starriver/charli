@@ -31,3 +31,24 @@ func TestErrorf(t *testing.T) {
 		t.Errorf("got '%s', want 'test 123'", s)
 	}
 }
+
+func TestRunCommand(t *testing.T) {
+	r := blankResult
+
+	v := false
+
+	r.Command = &charli.Command{
+		Run: func(r2 *charli.Result) {
+			if r2 != &r {
+				t.Error("should be same result passed to run")
+			}
+			v = true
+		},
+	}
+
+	r.RunCommand()
+
+	if !v {
+		t.Error("run func was ineffective")
+	}
+}

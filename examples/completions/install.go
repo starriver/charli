@@ -18,29 +18,24 @@ var install = charli.Command{
 	Name:        "install",
 	Headline:    "Install completions",
 	Description: installDescription,
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		if r.Fail {
-			return false
+			return
 		}
 
 		bashInstalled, err := InstallBash()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return false
+			r.Error(err)
 		}
 
 		fishInstalled, err := InstallFish()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return false
+			r.Error(err)
 		}
 
 		if !(bashInstalled || fishInstalled) {
-			fmt.Println("Nothing to install.")
-			return false
+			fmt.Fprintln(os.Stderr, "Nothing to install.")
 		}
-
-		return true
 	},
 }
 

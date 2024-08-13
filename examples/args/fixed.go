@@ -29,11 +29,11 @@ var fixed = charli.Command{
 		Metavars: []string{"ONE", "TWO", "THREE"},
 	},
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		cmd := r.Command
 
-		if len(r.Errs) != 0 {
-			return false
+		if r.Fail {
+			return
 		}
 
 		args := r.Args
@@ -41,7 +41,5 @@ var fixed = charli.Command{
 		for i := range args {
 			fmt.Printf("%s: %s", cmd.Args.Metavars[i], args[i])
 		}
-
-		return true
 	},
 }

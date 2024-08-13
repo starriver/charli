@@ -31,11 +31,11 @@ var varadic = charli.Command{
 		Varadic:  true,
 	},
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		cmd := r.Command
 
-		if len(r.Errs) != 0 {
-			return false
+		if r.Fail {
+			return
 		}
 
 		argsCfg := &cmd.Args
@@ -47,7 +47,5 @@ var varadic = charli.Command{
 		if len(r.Args) > 2 {
 			fmt.Printf("%s: %v", argsCfg.Metavars[2], r.Args[2:])
 		}
-
-		return true
 	},
 }

@@ -30,16 +30,14 @@ var app = charli.App{
 					Headline: "Set a flag",
 				},
 			},
-			Run: func(r *charli.Result) bool {
-				if len(r.Errs) != 0 {
-					return false
+			Run: func(r *charli.Result) {
+				if r.Fail {
+					return
 				}
 
 				if r.Options["f"].IsSet {
 					fmt.Println("You set the flag!")
 				}
-
-				return true
 			},
 		},
 	},

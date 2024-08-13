@@ -25,7 +25,7 @@ var freeform = charli.Command{
 		},
 	},
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		if r.Options["name"].Value == "" {
 			r.ErrorString("I need a name...")
 		}
@@ -39,8 +39,8 @@ var freeform = charli.Command{
 			}
 		}
 
-		if len(r.Errs) != 0 {
-			return false
+		if r.Fail {
+			return
 		}
 
 		fmt.Printf("Hello %s.", r.Options["name"].Value)
@@ -48,6 +48,5 @@ var freeform = charli.Command{
 			fmt.Printf(" Blimey, %d years old?", age)
 		}
 		fmt.Print("\n")
-		return true
 	},
 }

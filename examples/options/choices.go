@@ -25,7 +25,7 @@ var choices = charli.Command{
 		},
 	},
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		// Compare this with the r.Options["name"] check in freeform.go. If the
 		// name is set here, it must be one of the above choices.
 		if !r.Options["name"].IsSet {
@@ -51,14 +51,13 @@ var choices = charli.Command{
 			}
 		}
 
-		if len(r.Errs) != 0 {
-			return false
+		if r.Fail {
+			return
 		}
 
 		fmt.Printf(
 			"Hello %s. Blimey, %d years old?\n",
 			r.Options["name"].Value, age,
 		)
-		return true
 	},
 }

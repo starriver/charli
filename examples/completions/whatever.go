@@ -13,7 +13,7 @@ var whatever = charli.Command{
 			Headline: "This is a flag",
 		},
 	},
-	Run: func(r *charli.Result) bool {
-		return !r.Fail
+	Run: func(r *charli.Result) {
+		// Nothing to do.
 	},
 }

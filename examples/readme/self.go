@@ -15,8 +15,7 @@ var self = charli.Command{
 	Description: selfDescription,
 	Options:     options,
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		// Cmon. We're not writing logic for this nonsense.
-		return len(r.Errs) == 0
 	},
 }

@@ -24,8 +24,7 @@ var ag = charli.Command{
 		Headline: "Have A.G. produce your track",
 	}),
 
-	Run: func(r *charli.Result) bool {
+	Run: func(r *charli.Result) {
 		// Cmon. We're not writing logic for this nonsense.
-		return len(r.Errs) == 0
 	},
 }
