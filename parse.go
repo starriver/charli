@@ -5,10 +5,11 @@ import (
 	"strings"
 )
 
-// Parse argv and populate the user-specified command's values. argv must be the
-// full list of args, including the executable name (you probably want os.Args).
+// Parse parses CLI arguments, returning a [Result].
+// argv should be the full list of arguments, including the executable name.
+// (if in doubt, use [os.Args].)
 //
-// Returns a Result struct, populated with its findings.
+// See the readme for a complete description of the syntax supported by Parse.
 func (app *App) Parse(argv []string) (r Result) {
 	program := argv[0]
 	args := argv[1:]
@@ -381,10 +382,12 @@ func suggestHelpArg(ha HelpAccess) string {
 	return "--help"
 }
 
+// InvalidCommandError indicates the user has selected a command that doesn't
+// exist.
 type InvalidCommandError struct {
-	Program     string
-	Name        string
-	SuggestHelp HelpAccess
+	Program     string     // the name of the program
+	Name        string     // the name of the invalid command
+	SuggestHelp HelpAccess // how to suggest CLI help is accessed
 }
 
 func (err InvalidCommandError) Error() string {
@@ -400,9 +403,14 @@ func (err InvalidCommandError) Error() string {
 	)
 }
 
+// MissingCommandError indicates that the CLI requires the user to supply a
+// command, yet they didn't.
+//
+// This error only occurs when multiple [Command]s are configured
+// and [App.DefaultCommand] is blank.
 type MissingCommandError struct {
-	Program    string
-	HelpAccess HelpAccess
+	Program    string     // the name of the program
+	HelpAccess HelpAccess // how to suggest CLI help is accessed
 }
 
 func (err MissingCommandError) Error() string {
@@ -413,10 +421,12 @@ func (err MissingCommandError) Error() string {
 	)
 }
 
+// InvalidChoiceError indicates that the user has supplied an invalid choice
+// as the value for an option which has [Option.Choices] set.
 type InvalidChoiceError struct {
-	Option    *Option
-	JoinedArg string
-	Value     string
+	Option    *Option // the [Option] in question
+	JoinedArg string  // the argument(s) in question, which may be concatenated
+	Value     string  // the invalid value
 }
 
 func (err InvalidChoiceError) Error() string {
@@ -427,10 +437,13 @@ func (err InvalidChoiceError) Error() string {
 	)
 }
 
+// AmbiguousValueError indicates that the user has supplied a value for an
+// option that looks like another option itself
+// (that is, the value starts with `-`).
 type AmbiguousValueError struct {
-	Option    *Option
-	OptionArg string
-	Value     string
+	Option    *Option // the [Option] in question
+	OptionArg string  // the first argument (which triggered the [Option])
+	Value     string  // the second argument (which is ambiguous)
 }
 
 func (err AmbiguousValueError) Error() string {
@@ -447,9 +460,11 @@ func (err AmbiguousValueError) Error() string {
 	return s
 }
 
+// InvalidOptionError indicates that the user supplied an option which doesn't
+// exist.
 type InvalidOptionError struct {
-	Arg         string
-	CombinedArg string
+	Arg         string // the invalid option's argument
+	CombinedArg string // the combined argument it is part of (if applicable)
 }
 
 func (err InvalidOptionError) Error() string {
@@ -463,19 +478,27 @@ func (err InvalidOptionError) Error() string {
 	return fmt.Sprintf("unrecognized option: '%s'", err.Arg)
 }
 
+// CombinedEqualsError indicates that the user attempted to use `=` in a
+// combined option.
+//
+// Combined options may only contain flags,
+// meaning that `=` can't be used to set an option's value.
 type CombinedEqualsError struct {
-	Arg string
+	Arg string // the combined argument in question
 }
 
 func (err CombinedEqualsError) Error() string {
 	return fmt.Sprintf("combined short option can't contain '=': '%s'", err.Arg)
 }
 
+// DuplicateOptionError indicates that the user supplied the same option more
+// than once.
 type DuplicateOptionError struct {
-	// nb. OptionResult here so downstream can see previous value
-	Option      *OptionResult
-	Arg         string
-	CombinedArg string
+	Option      *OptionResult // the [OptionResult] set in the first instance
+	Arg         string        // the argument in question
+	CombinedArg string        // the combined argument it is part of (if applicable)
+
+	// nb. OptionResult is used here so downstream can see the previous value.
 }
 
 func (err DuplicateOptionError) Error() string {
@@ -489,10 +512,14 @@ func (err DuplicateOptionError) Error() string {
 	return fmt.Sprintf("duplicate option: '%s'", err.Arg)
 }
 
+// CombinedValueError indicates that the user attempted to use a non-flag option
+// as part of a combined option.
+//
+// Combined options may only contain flags.
 type CombinedValueError struct {
-	Option      *Option
-	Arg         string
-	CombinedArg string
+	Option      *Option // the [Option] in question
+	Arg         string  // the option's name (as used in the combined argument)
+	CombinedArg string  // the combined argument it is part of
 }
 
 func (err CombinedValueError) Error() string {
@@ -503,26 +530,34 @@ func (err CombinedValueError) Error() string {
 	)
 }
 
+// MissingValueError indicates that the user omitted the value for an option
+// from the end of the command line.
 type MissingValueError struct {
-	Option  *Option
-	Arg     string
-	Metavar string
+	Option  *Option // the [Option] in question
+	Arg     string  // the argument that triggered the option
+	Metavar string  // the option's metavar
 }
 
 func (err MissingValueError) Error() string {
 	return fmt.Sprintf("missing value %s for '%s'", err.Metavar, err.Arg)
 }
 
+// TooManyArgsError indicates that the user supplied more positional arguments
+// than were allowed by [Args.Count].
+//
+// This error only occurs when [Args.Varadic] is false.
 type TooManyArgsError struct {
-	Args []string
+	Args []string // the extraneous arguments
 }
 
 func (err TooManyArgsError) Error() string {
 	return fmt.Sprint("too many arguments: ", strings.Join(err.Args, ""))
 }
 
+// MissingArgsError indicates that the user didn't supply enough positional
+// arguments, as specified by [Args.Count].
 type MissingArgsError struct {
-	Metavars []string
+	Metavars []string // the metavars for the missing arguments
 }
 
 func (err MissingArgsError) Error() string {
