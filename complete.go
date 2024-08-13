@@ -7,8 +7,22 @@ import (
 	"strings"
 )
 
-// Prints newline-separated completions. i should be the index of the arg being
-// completed in argv.
+// Complete writes shell completions to w for argv.
+// argv should be a slice of the arguments currently on the command line,
+// including the program name, and truncated at the cursor position.
+// The last element of argv may be an empty string,
+// in which case all relevant completions will be written.
+//
+// Completions are line-separated.
+// Each line contains a potential completion, followed by `\t`,
+// then a description of the completion.
+//
+// Regarding shell completion functions that use this function's output:
+//
+//   - The bash function should truncate each line at the `\t`.
+//   - The fish function doesn't need to truncate each line,
+//     as it will display the characters after the `\t` as a description
+//     for each completion.
 func (app *App) Complete(w io.Writer, argv []string) {
 	if len(argv) <= 2 {
 		panic("argv appears truncated")
@@ -182,15 +196,16 @@ func shellID(program string) string {
 	return idRe.ReplaceAllString(program, "_")
 }
 
-// Writes a bash completion script to w.
+// GenerateBashCompletions writes a bash completion script to w.
 //
 // program should be the program name (which will presumably be in the user's
-// PATH). flag should be a special trigger flag, *including* hyphen prefixes,
-// which your program should use to bypass normal execution and generate
-// completions instead (presumably using Complete(...)).
+// PATH).
+// flag should be a special trigger flag, *including* hyphen prefixes,
+// which your program should use to bypass normal execution
+// and generate completions instead (using [App.Complete]).
 //
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
-// If in doubt, use "--_complete".
+// If in doubt, use `--_complete`.
 func GenerateBashCompletions(w io.Writer, program, flag string) {
 	qprogram := quote(program)
 	funcName := fmt.Sprintf("_complete_charli_%s", shellID(program))
@@ -219,15 +234,16 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 	)
 }
 
-// Writes a fish completion script to w.
+// GenerateFishCompletions writes a fish completion script to w.
 //
 // program should be the program name (which will presumably be in the user's
-// PATH). flag should be a special trigger flag, *including* hyphen prefixes,
-// which your program should use to bypass normal execution and generate
-// completions instead (presumably using Complete(...)).
+// PATH).
+// flag should be a special trigger flag, *including* hyphen prefixes,
+// which your program should use to bypass normal execution
+// and generate completions instead (using [App.Complete]).
 //
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
-// If in doubt, use "--_complete".
+// If in doubt, use `--_complete`.
 func GenerateFishCompletions(w io.Writer, program, flag string) {
 	qprogram := quote(program)
 	funcName := fmt.Sprintf("__fish_complete_charli_%s", shellID(program))
