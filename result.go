@@ -81,10 +81,9 @@ type OptionResult struct {
 	IsSet bool
 }
 
-// Error reports a pre-made [error] and sets [Result.Fail] to true.
+// Error reports a pre-made error and sets Fail to true.
 // This is called by [App.Parse], and you can use it in your own validations.
-// Unless [App.ErrorHandler] is set,
-// the error will be appended to [Result.Errs].
+// Unless ErrorHandler is set, the error will be appended to Errs.
 // Otherwise, the handler will be called.
 func (r *Result) Error(err error) {
 	r.Fail = true
@@ -96,11 +95,9 @@ func (r *Result) Error(err error) {
 	}
 }
 
-// ErrorString reports an [error] described by str and sets [Result.Fail] to
-// true.
+// ErrorString reports an error described by str and sets Fail to true.
 // This is called by [App.Parse], and you can use it in your own validations.
-// Unless [App.ErrorHandler] is set,
-// the error will be appended to [Result.Errs].
+// Unless ErrorHandler is set, the error will be appended to Errs.
 // Otherwise, the handler will be called.
 func (r *Result) ErrorString(str string) {
 	r.Fail = true
@@ -113,11 +110,9 @@ func (r *Result) ErrorString(str string) {
 	}
 }
 
-// Errorf reports an [error] using the specified format and args and sets
-// [Result.Fail] to true.
+// Errorf reports an error using the specified format and sets Fail to true.
 // This is called by [App.Parse], and you can use it in your own validations.
-// Unless [App.ErrorHandler] is set,
-// the error will be appended to [Result.Errs].
+// Unless ErrorHandler is set, the error will be appended to Errs.
 // Otherwise, the handler will be called.
 func (r *Result) Errorf(format string, a ...any) {
 	r.Fail = true
@@ -132,7 +127,9 @@ func (r *Result) Errorf(format string, a ...any) {
 }
 
 // RunCommand calls [Command.Run] for the command the user chose.
-// This is shorthand for `r.Command.Run(&r)`.
+// This is shorthand for:
+//
+//	r.Command.Run(&r)
 func (r *Result) RunCommand() {
 	r.Command.Run(r)
 }

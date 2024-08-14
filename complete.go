@@ -14,14 +14,14 @@ import (
 // in which case all relevant completions will be written.
 //
 // Completions are line-separated.
-// Each line contains a potential completion, followed by `\t`,
+// Each line contains a potential completion, followed by '\t',
 // then a description of the completion.
 //
 // Regarding shell completion functions that use this function's output:
 //
-//   - The bash function should truncate each line at the `\t`.
+//   - The bash function should truncate each line at the '\t'.
 //   - The fish function doesn't need to truncate each line,
-//     as it will display the characters after the `\t` as a description
+//     as it will display the characters after the '\t' as a description
 //     for each completion.
 func (app *App) Complete(w io.Writer, argv []string) {
 	if len(argv) <= 2 {
@@ -205,7 +205,7 @@ func shellID(program string) string {
 // and generate completions instead (using [App.Complete]).
 //
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
-// If in doubt, use `--_complete`.
+// If in doubt, use "--_complete".
 func GenerateBashCompletions(w io.Writer, program, flag string) {
 	qprogram := quote(program)
 	funcName := fmt.Sprintf("_complete_charli_%s", shellID(program))
@@ -243,7 +243,7 @@ func GenerateBashCompletions(w io.Writer, program, flag string) {
 // and generate completions instead (using [App.Complete]).
 //
 // flag can be anything you want, but don't use anything ambiguous to your CLI.
-// If in doubt, use `--_complete`.
+// If in doubt, use "--_complete".
 func GenerateFishCompletions(w io.Writer, program, flag string) {
 	qprogram := quote(program)
 	funcName := fmt.Sprintf("__fish_complete_charli_%s", shellID(program))
