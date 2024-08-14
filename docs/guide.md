@@ -319,11 +319,8 @@ missing arguments: AGE STATUS
 > go run . Calvin --flag 52 Hustlin
 > ```
 
-### Varadic arguments
-
-You can allow an unlimited number of positional args by setting `Varadic`. In this case, `Count` becomes the minimum.
-
-Let's change the program to just print out every positional arg
+> [!TIP]
+> You can allow an unlimited number of positional args by setting `Varadic`. In this case, `Count` becomes the *minimum* number of args required.
 
 ## Commands
 
