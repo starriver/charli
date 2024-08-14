@@ -3,8 +3,8 @@
 // It includes a CLI parser ([App.Parse]), help formatter ([App.Help]) and shell
 // completions ([App.Complete]).
 //
-// Configure your CLI with an [App]. Apps have one or several [Command]s, each
-// with several [Option]s and [Args].
+// Configure your CLI with an [App]. Apps have one or several [Command] structs,
+// each with several [Option] structs and [Args].
 package charli
 
 import (

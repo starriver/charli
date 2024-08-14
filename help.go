@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/color"
 )
 
-// Note that these aren't used by Parse(...).
+// Note that these aren't used by App.Parse(...).
 // -h/--help/help are treated as special symbols there.
 var fakeHelpOption = Option{
 	Short:    'h',
@@ -31,14 +31,14 @@ var fakeHelpCmd = Command{
 // If cmd is nil, global help will be written.
 // Otherwise, command help will be written.
 //
-// [App.Headline] is written first, followed by a usage line.
+// The [App] Headline is written first, followed by a usage line.
 // For global help, the following are then written:
-//   - [App.Description]
+//   - The [App] Description
 //   - A list of commands
 //   - A list of options
 //
 // For command help, the following are instead written:
-//   - [Command.Description]
+//   - The [Command] Description
 //   - A list of options
 func (app *App) Help(w io.Writer, program string, cmd *Command) {
 	print := func(str string) {

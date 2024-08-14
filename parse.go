@@ -406,8 +406,8 @@ func (err InvalidCommandError) Error() string {
 // MissingCommandError indicates that the CLI requires the user to supply a
 // command, yet they didn't.
 //
-// This error only occurs when multiple [Command]s are configured
-// and [App.DefaultCommand] is blank.
+// This error only occurs when multiple [Command] structs are configured
+// and DefaultCommand is blank.
 type MissingCommandError struct {
 	Program    string     // the name of the program
 	HelpAccess HelpAccess // how to suggest CLI help is accessed
@@ -422,7 +422,7 @@ func (err MissingCommandError) Error() string {
 }
 
 // InvalidChoiceError indicates that the user has supplied an invalid choice
-// as the value for an option which has [Option.Choices] set.
+// as the value for an option which has Choices set.
 type InvalidChoiceError struct {
 	Option    *Option // the [Option] in question
 	JoinedArg string  // the argument(s) in question, which may be concatenated
@@ -439,7 +439,7 @@ func (err InvalidChoiceError) Error() string {
 
 // AmbiguousValueError indicates that the user has supplied a value for an
 // option that looks like another option itself
-// (that is, the value starts with `-`).
+// (that is, the value starts with '-').
 type AmbiguousValueError struct {
 	Option    *Option // the [Option] in question
 	OptionArg string  // the first argument (which triggered the [Option])
@@ -478,11 +478,11 @@ func (err InvalidOptionError) Error() string {
 	return fmt.Sprintf("unrecognized option: '%s'", err.Arg)
 }
 
-// CombinedEqualsError indicates that the user attempted to use `=` in a
+// CombinedEqualsError indicates that the user attempted to use '=' in a
 // combined option.
 //
 // Combined options may only contain flags,
-// meaning that `=` can't be used to set an option's value.
+// meaning that '=' can't be used to set an option's value.
 type CombinedEqualsError struct {
 	Arg string // the combined argument in question
 }
@@ -543,9 +543,9 @@ func (err MissingValueError) Error() string {
 }
 
 // TooManyArgsError indicates that the user supplied more positional arguments
-// than were allowed by [Args.Count].
+// than were allowed by the [Args] Count.
 //
-// This error only occurs when [Args.Varadic] is false.
+// This error only occurs when Varadic is false.
 type TooManyArgsError struct {
 	Args []string // the extraneous arguments
 }
@@ -555,7 +555,7 @@ func (err TooManyArgsError) Error() string {
 }
 
 // MissingArgsError indicates that the user didn't supply enough positional
-// arguments, as specified by [Args.Count].
+// arguments, as specified by the [Args] Count.
 type MissingArgsError struct {
 	Metavars []string // the metavars for the missing arguments
 }
