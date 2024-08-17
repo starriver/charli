@@ -387,8 +387,8 @@ Options:
   -h/--help  Show this help
 
 Commands:
-	cmd1
-	cmd2
+  cmd1
+  cmd2
 `
 
 var testHelpCases = []struct {
