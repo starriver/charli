@@ -354,6 +354,43 @@ Usage: program cmd1
   Headline1
 `
 
+// With global options but without command
+var testHelpApp14 = charli.App{
+	Commands: []charli.Command{
+		{
+			Name: "cmd1",
+			Options: []charli.Option{
+				{
+					Short:    'b',
+					Flag:     true,
+					Headline: "Command",
+				},
+			},
+		},
+		{
+			Name: "cmd2",
+		},
+	},
+	GlobalOptions: []charli.Option{
+		{
+			Short:    'a',
+			Flag:     true,
+			Headline: "Global",
+		},
+	},
+}
+
+const testHelpOutput14 = `
+Usage: program [OPTIONS] COMMAND [...]
+
+Options:
+  -h/--help  Show this help
+
+Commands:
+  cmd1
+  cmd2
+`
+
 var testHelpCases = []struct {
 	app    *charli.App
 	cmd    bool
@@ -419,6 +456,10 @@ var testHelpCases = []struct {
 		app:    &testHelpApp13,
 		cmd:    true,
 		output: testHelpOutput13,
+	},
+	{
+		app:    &testHelpApp14,
+		output: testHelpOutput14,
 	},
 }
 
