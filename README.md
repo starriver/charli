@@ -1,3 +1,7 @@
+> [!WARNING]
+>
+> [charli has been moved to Codeberg.](https://codeberg.org/starriver/charli) The GitHub repo won't see any further updates.
+
 # c~~har~~li
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/starriver/charli.svg)](https://pkg.go.dev/github.com/starriver/charli)
